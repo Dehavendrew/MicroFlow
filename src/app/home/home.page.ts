@@ -1,14 +1,15 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, ViewChildren, ElementRef, OnInit, QueryList } from '@angular/core';
 import { AlertController, ModalController } from '@ionic/angular';
 import { DataService, Note } from '../services/data.service';
 import { ModalPage } from '../modal/modal.page';
-import { getAuth } from '@angular/fire/auth'
 import { AuthService } from '../services/auth.service';
 import { AngularFireAuth, PERSISTENCE } from '@angular/fire/compat/auth';
 import { Observable } from 'rxjs';
 import { User } from '../services/user';
+import { Session } from '../services/session';
 import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/compat/firestore';
 import { docData, doc, Firestore } from '@angular/fire/firestore';
+import { Chart, registerables } from 'chart.js';
 
 @Component({
   selector: 'app-home',
@@ -18,13 +19,46 @@ import { docData, doc, Firestore } from '@angular/fire/firestore';
 export class HomePage {
   
   notes: Note[] = [];
+  sessions: Session[] = [];
   user: any;
   auth_user: any;
   userSub: any
 
+  @ViewChildren("charts") lineCanvas: any;
+  private lineChart: Chart[] = [];
+  data: [65, 59, 80, 81, 56, 55, 40]
+
+  ngAfterViewInit(){
+    this.lineCanvas.toArray().forEach(el => {
+      console.log(el)
+  });
+  }
+
+
+  test(){ 
+    this.lineCanvas.toArray().forEach((el,idx) => {
+      let sessData = this.sessions[idx].data
+      let labels = Array.from(Array(sessData.length).keys())
+      this.lineChart.push(new Chart(el.nativeElement, {
+        type:"line",
+        data: {
+          labels: labels,
+          datasets: [{
+          label: 'Session Data Set',
+          data: sessData,
+          fill: false,
+          borderColor: 'rgb(75, 192, 192)',
+          tension: 0.1
+        }]}
+      }))
+    })
+  }
+  
+
 
   constructor(private firestore: Firestore, public afs: AngularFirestore, private dataService: DataService, private cd: ChangeDetectorRef, private alertCtrl: AlertController, private modalCtrl: ModalController,  public afAuth: AngularFireAuth, public authService: AuthService) {
-    this.authStatusListener()
+    this.authStatusListener()  
+    Chart.register(...registerables);
   }
 
   authStatusListener(){
@@ -52,33 +86,33 @@ export class HomePage {
       this.notes = res;
       this.cd.detectChanges()
     })
+    this.dataService.getSessions(uid).subscribe((res) => {
+      this.sessions = res;
+      this.cd.detectChanges()
+    })
   }
+
 
   GetUserData(user: any): Observable<User>{
     const userRef =  doc(this.firestore, `users/${user.uid}`);
     return docData(userRef, { idField: 'uid'}) as Observable<User>
   }
 
-  // setUser(){
-  //   this.userSub = this.afAuth.authState.subscribe(res => {
-  //     console.log("New Sign in Detected")
-  //     this.cd.detectChanges();
-  //     this.authService.GetUserData(res).subscribe(
-  //       user => {
-  //         this.user = user
-  //         this.dataService.getNotes(this.user.uid).subscribe(res => {
-  //           this.notes = res;
-  //           this.cd.detectChanges()
-  //         })
-  //       },
-  //       err => console.log(err));
-  //   }, err => {console.log("Not Signed In")})
-  // }
-
   async signOut(){
     this.userSub.unsubscribe()
     this.afAuth.signOut().then(() => {
     })
+  }
+
+  async addSession(){
+    var dataArray: number[] = []
+    for (let i = 0; i < 10; i++) {
+      dataArray.push(Math.random())
+    }
+
+    var currentTime = new Date()
+    this.dataService.addSession({uid: this.user.uid, date: currentTime, data: dataArray})
+
   }
 
   async addNote(){

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Firestore, collection, collectionData, doc, docData, addDoc, deleteDoc, updateDoc, query, where } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
-import { AngularFireAuth } from '@angular/fire/compat/auth';
+import { Session } from './session';
 
 
 export interface Note{
@@ -26,6 +26,12 @@ export class DataService {
     return collectionData(usernotesRef, { idField: 'id'}) as Observable<Note[]>;
   }
 
+  getSessions(uid): Observable<Session[]>{
+    const sessRef = collection(this.firestore, 'sessions');
+    const userSessRef = query(sessRef, where("uid", "==", uid));
+    return collectionData(userSessRef, { idField: 'id'}) as Observable<Session[]>;
+  }
+
   getNoteById(id):Observable<Note>{
     const noteDocRef = doc(this.firestore, `notes/${id}`);
     return docData(noteDocRef, { idField: 'id'}) as Observable<Note>;
@@ -34,6 +40,11 @@ export class DataService {
   addNote(note: Note){
     const notesRef = collection(this.firestore, 'notes');
     return addDoc(notesRef, note);
+  }
+
+  addSession(session: Session){
+    const sessionRef = collection(this.firestore, 'sessions');
+    return addDoc(sessionRef, session)
   }
 
   deleteNote(note: Note){
