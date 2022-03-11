@@ -89,6 +89,7 @@ export class HomePage {
     this.dataService.getSessions(uid).subscribe((res) => {
       this.sessions = res;
       this.cd.detectChanges()
+      this.test();
     })
   }
 
