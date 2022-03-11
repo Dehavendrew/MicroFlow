@@ -18,11 +18,25 @@ const routes: Routes = [
   },
   {
     path: 'modal',
-    loadChildren: () => import('./modal/modal.module').then( m => m.ModalPageModule)
+    loadChildren: () => import('./modal/modal.module').then( m => m.ModalPageModule),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'tabs',
+    loadChildren: () => import('./tabs/tabs.module').then( m => m.TabsPageModule),
+    canActivate: [AuthGuard]
   },
   { path: 'sign-in', component: SignInComponent },
   { path: 'register-user', component: SignUpComponent},
-  { path: 'forgot-password', component: ForgotPasswordComponent}
+  { path: 'forgot-password', component: ForgotPasswordComponent},
+  {
+    path: 'profile',
+    loadChildren: () => import('./profile/profile.module').then( m => m.ProfilePageModule)
+  },
+  {
+    path: 'connect',
+    loadChildren: () => import('./connect/connect.module').then( m => m.ConnectPageModule)
+  }
 
 ];
 

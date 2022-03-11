@@ -1,26 +1,33 @@
-<div class="displayTable">
-  <div class="displayTableCell">
-    <div class="authBlock">
-      <h3>Sign In</h3>
-      <div class="formGroup">
-        <input type="text" class="formControl" placeholder="Username" #userName required>
-      </div>
-      <div class="formGroup">
-        <input type="password" class="formControl" placeholder="Password" #userPassword required>
-      </div>
-      <!-- Calling SignIn Api from AuthService -->
-      <div class="formGroup">
-        <input type="button" class="btn btnPrimary" value="Log in" (click)="authService.SignIn(userName.value, userPassword.value)">
-      </div>
-      <div class="formGroup">
-        <span class="or"><span class="orInner">Or</span></span>
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Sign-In</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <div class="displayTable">
+    <div class="displayTableCell">
+      <div class="authBlock">
+        <div class="formGroup">
+          <input type="text" class="formControl" placeholder="Username" #userName required>
+        </div>
+        <div class="formGroup">
+          <input type="password" class="formControl" placeholder="Password" #userPassword required>
+        </div>
+        <!-- Calling SignIn Api from AuthService -->
+        <div class="formGroup">
+          <ion-button (click)="authService.SignIn(userName.value, userPassword.value)">Sign In</ion-button>
+        </div>
+        <div class="formGroup">
+          <span class="or"><span class="orInner">Or</span></span>
+        </div>
+        <div>
+          <ion-button href="/register-user">Register User</ion-button>
+        </div>
       </div>
       <div>
-        <ion-button href="/register-user">Register User</ion-button>
+        <ion-button href="/forgot-password">Forgot Password?</ion-button>
       </div>
     </div>
-    <div>
-      <ion-button href="/forgot-password">Forgot Password?</ion-button>
-    </div>
   </div>
-</div>
+</ion-content>

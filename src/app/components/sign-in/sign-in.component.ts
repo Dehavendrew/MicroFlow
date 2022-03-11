@@ -14,7 +14,7 @@ export class SignInComponent implements OnInit {
     this.afAuth.authState.subscribe(res => {
       if(res != null){
         this.ngZone.run(() => {
-          this.router.navigate(['home']);
+          this.router.navigate(['tabs']);
         });
       }
     })

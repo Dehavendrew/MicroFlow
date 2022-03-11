@@ -1,0 +1,18 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>profile</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-item *ngIf="user"> 
+    <ion-label>
+      {{ user.displayName }}
+    </ion-label>
+  </ion-item>
+  <ion-fab vertical="center" horizontal="center" slot="fixed">
+    <ion-button (click)="signOut()">
+      Sign-Out
+    </ion-button>
+  </ion-fab>
+</ion-content>

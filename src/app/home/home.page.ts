@@ -26,16 +26,14 @@ export class HomePage {
 
   @ViewChildren("charts") lineCanvas: any;
   private lineChart: Chart[] = [];
-  data: [65, 59, 80, 81, 56, 55, 40]
 
-  ngAfterViewInit(){
-    this.lineCanvas.toArray().forEach(el => {
-      console.log(el)
-  });
+
+  constructor(private firestore: Firestore, public afs: AngularFirestore, private dataService: DataService, private cd: ChangeDetectorRef, private alertCtrl: AlertController, private modalCtrl: ModalController,  public afAuth: AngularFireAuth, public authService: AuthService) {
+    this.authStatusListener()  
+    Chart.register(...registerables);
   }
 
-
-  test(){ 
+  LoadGraphs(){ 
     this.lineCanvas.toArray().forEach((el,idx) => {
       let sessData = this.sessions[idx].data
       let labels = Array.from(Array(sessData.length).keys())
@@ -54,12 +52,6 @@ export class HomePage {
     })
   }
   
-
-
-  constructor(private firestore: Firestore, public afs: AngularFirestore, private dataService: DataService, private cd: ChangeDetectorRef, private alertCtrl: AlertController, private modalCtrl: ModalController,  public afAuth: AngularFireAuth, public authService: AuthService) {
-    this.authStatusListener()  
-    Chart.register(...registerables);
-  }
 
   authStatusListener(){
     this.afAuth.onAuthStateChanged((cred) => {
@@ -82,14 +74,10 @@ export class HomePage {
   }
 
   setData(uid){
-    this.dataService.getNotes(uid).subscribe((res) => {
-      this.notes = res;
-      this.cd.detectChanges()
-    })
     this.dataService.getSessions(uid).subscribe((res) => {
       this.sessions = res;
       this.cd.detectChanges()
-      this.test();
+      this.LoadGraphs();
     })
   }
 

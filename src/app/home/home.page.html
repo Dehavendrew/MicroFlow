@@ -7,12 +7,6 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-item *ngIf="user"> 
-    <ion-label>
-      {{ user.displayName }}
-    </ion-label>
-  </ion-item>
-
   <ion-list>
     <ion-item *ngFor="let session of sessions; let i = index">
       <ion-label>
@@ -20,17 +14,4 @@
       </ion-label>
     </ion-item>
   </ion-list>
-
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="addSession()">
-      Add Data
-    </ion-fab-button>
-  </ion-fab>
-
-  <ion-fab vertical="bottom" horizontal="start" slot="fixed">
-    <ion-fab-button (click)="signOut()">
-      Sign-Out
-    </ion-fab-button>
-  </ion-fab>
-
 </ion-content>
