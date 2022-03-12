@@ -3,4 +3,5 @@ export interface Session {
     date: Date,
     data: number[]
     id?: number
+    numSamples?: number
 }

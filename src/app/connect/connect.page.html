@@ -79,7 +79,7 @@
       <ion-col class="row_center" class="results">
         Session: {{ session.id }} <br>
         Date: {{ session.date | date:'medium' }} <br>
-        Duration: {{ session.data.length / 10 }} seconds
+        Duration: {{ session.numSamples / 10 }} seconds
       </ion-col>
       <ion-col class="row_center">
         <ion-icon class="small-pad" name="cloud-upload-outline" (click)="cloudWrite(session.id)"></ion-icon>
@@ -94,7 +94,7 @@
       </ion-col>
     </ion-row>
 
-    <ion-row class="row_center" [ngStyle]="{'visibility':taskQueue.length > 0}" *ngFor="let task of taskQueue; let i = index">
+    <ion-row class="row_center" [ngStyle]="{'visibility':taskQueue}" *ngFor="let task of taskQueue; let i = index">
       <ion-col class="row_center" class="results">
         {{task.task}} session {{ task.id }}
       </ion-col>

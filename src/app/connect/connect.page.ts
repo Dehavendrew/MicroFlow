@@ -6,6 +6,7 @@ import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { AuthService } from '../services/auth.service';
 import { User } from '../services/user';
 import { Observable } from 'rxjs';
+import { BluetoothService } from '../services/bluetooth.service';
 
 export interface Task {
   session: Session,
@@ -38,7 +39,7 @@ export class ConnectPage implements OnInit {
 
   user: User
 
-  constructor(private toastCtrl: ToastController, private dataService: DataService, public afAuth: AngularFireAuth, public authService: AuthService) {
+  constructor(private toastCtrl: ToastController, private dataService: DataService, public afAuth: AngularFireAuth, public authService: AuthService, private bleService: BluetoothService) {
     this.resetPairing()
     this.authStatusListener()
    }
@@ -74,22 +75,17 @@ export class ConnectPage implements OnInit {
     return new Promise( resolve => {
       setTimeout(resolve, 1000) 
 
-      var numsamples = 0
+      var Numsamples = 0
 
       for (let j = 0; j < 5; j++){
-        var dataArray: number[] = []
         var currentTime = new Date()
         var sess_id = Math.floor(Math.random() * 10000000)
-        for (let i = 0; i < 10; i++) {
-          dataArray.push(Math.random())
-          numsamples++
-        }
-  
-        this.sessions.push({uid: this.user.uid, date: currentTime, data: dataArray, id:sess_id })
+        Numsamples = Math.floor(Math.random() * 100)
+        this.sessions.push({uid: this.user.uid, date: currentTime, data: null, id:sess_id, numSamples: Numsamples })
       }
       
       this.numSessionsOnDisk = this.sessions.length
-      this.numMinutesOnDisk = numsamples / 10
+      this.numMinutesOnDisk = Numsamples / 10
 
     });
   }
@@ -106,20 +102,22 @@ export class ConnectPage implements OnInit {
       }
     }
 
-    this.taskQueue.push({session: sess, id: i, task: "Cloud Write ", completed: false})
-    this.dataService.addSession(sess).then(res => {
-      for (let task of this.taskQueue) {
-        if(task.id == i){
-          task.completed = true
-          console.log("Done")
+    this.bleService.downloadStoredData(sess).then((res) => {
+      this.taskQueue.push({session: res, id: i, task: "Cloud Write ", completed: false})
+      this.dataService.addSession(res).then(res => {
+        for (let task of this.taskQueue) {
+          if(task.id == i){
+            task.completed = true
+            console.log("Done")
+          }
         }
-      }
-      for (let idx = 0; idx < this.sessions.length; idx++){
-        if(this.sessions[idx].id == i){
-          this.sessions.splice(idx, 1);
+        for (let idx = 0; idx < this.sessions.length; idx++){
+          if(this.sessions[idx].id == i){
+            this.sessions.splice(idx, 1);
+          }
         }
-      }
-      this.updateStats()
+        this.updateStats()
+      })
     })
   }
 
@@ -156,7 +154,7 @@ export class ConnectPage implements OnInit {
   async updateStats(){
     let numsamples = 0
     for (let idx = 0; idx < this.sessions.length; idx++){
-      numsamples = numsamples + this.sessions[idx].data.length
+      numsamples = numsamples + this.sessions[idx].numSamples
     }
     this.numSessionsOnDisk = this.sessions.length
     this.numMinutesOnDisk = numsamples / 10
