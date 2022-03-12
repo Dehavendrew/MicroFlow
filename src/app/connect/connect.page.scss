@@ -1,0 +1,23 @@
+.row_center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.col_left {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+}
+
+.results {
+    align-items: left;
+    justify-content: left;
+    padding-left: 10pt;
+    color: grey;
+    font-size: 12px;
+}
+
+.small-pad {
+    padding-left: 10pt;
+}

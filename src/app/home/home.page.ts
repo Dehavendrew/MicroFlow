@@ -42,16 +42,16 @@ export class HomePage {
         data: {
           labels: labels,
           datasets: [{
-          label: 'Session Data Set',
+          label: 'Air Flow (m/s)',
           data: sessData,
           fill: false,
-          borderColor: 'rgb(75, 192, 192)',
+          borderColor: 'rgb(80, 00, 00)',
           tension: 0.1
         }]}
       }))
     })
   }
-  
+
 
   authStatusListener(){
     this.afAuth.onAuthStateChanged((cred) => {
