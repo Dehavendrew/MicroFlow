@@ -5,3 +5,9 @@ export interface Session {
     id?: number
     numSamples?: number
 }
+
+export interface RawDataPacket {
+    sessionID: number,
+    idx: number,
+    data: number[]
+}

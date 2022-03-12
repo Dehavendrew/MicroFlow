@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Firestore, collection, collectionData, doc, docData, addDoc, deleteDoc, updateDoc, query, where } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
-import { Session } from './session';
+import { Session, RawDataPacket } from './session';
 
 
 export interface Note{
@@ -45,6 +45,11 @@ export class DataService {
   addSession(session: Session){
     const sessionRef = collection(this.firestore, 'sessions');
     return addDoc(sessionRef, session)
+  }
+
+  addRawPacket(packet: RawDataPacket){
+    const packetRef = collection(this.firestore, 'packets');
+    return addDoc(packetRef, packet)
   }
 
   deleteNote(note: Note){

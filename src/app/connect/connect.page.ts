@@ -79,9 +79,10 @@ export class ConnectPage implements OnInit {
 
       for (let j = 0; j < 5; j++){
         var currentTime = new Date()
-        var sess_id = Math.floor(Math.random() * 10000000)
-        Numsamples = Math.floor(Math.random() * 100)
-        this.sessions.push({uid: this.user.uid, date: currentTime, data: null, id:sess_id, numSamples: Numsamples })
+        var sess_id = Math.floor(Math.random() * 1000000000)
+        var NumsamplesTest = Math.floor(Math.random() * 1000)
+        this.sessions.push({uid: this.user.uid, date: currentTime, data: null, id:sess_id, numSamples: NumsamplesTest })
+        Numsamples = Numsamples + NumsamplesTest
       }
       
       this.numSessionsOnDisk = this.sessions.length
@@ -91,6 +92,10 @@ export class ConnectPage implements OnInit {
   }
 
   async cloudWrite(i){
+    if(await this.checkTaskInQueue(i)){
+      return
+    }
+    
     this.isImporting = true
     let msg = "Writing Session " + i + " To Firebase"
     console.log(msg)
@@ -102,8 +107,9 @@ export class ConnectPage implements OnInit {
       }
     }
 
-    this.bleService.downloadStoredData(sess).then((res) => {
-      this.taskQueue.push({session: res, id: i, task: "Cloud Write ", completed: false})
+    this.taskQueue.push({session: sess, id: i, task: "Cloud Write ", completed: false})
+
+    this.bleService.requestDataStream(sess).then((res) => {
       this.dataService.addSession(res).then(res => {
         for (let task of this.taskQueue) {
           if(task.id == i){

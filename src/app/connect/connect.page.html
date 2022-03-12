@@ -99,11 +99,13 @@
         {{task.task}} session {{ task.id }}
       </ion-col>
       <ion-col class="row_center" *ngIf="task.completed; else taskAwait">
-        <ion-icon name="checkbox-outline" color="success"></ion-icon>
+        100%
+        <ion-icon name="checkbox-outline" color="success" class="small-pad"></ion-icon>
       </ion-col>
       <ng-template #taskAwait>
         <ion-col class="row_center">
-          <ion-spinner name="crescent" #load_wheel></ion-spinner>
+          {{ bleService.currentLoadPercent * 100 | number }}%
+          <ion-spinner name="crescent" #load_wheel class="small-pad"></ion-spinner>
         </ion-col>
       </ng-template>
     </ion-row>
