@@ -81,7 +81,7 @@ export class ConnectPage implements OnInit {
         var currentTime = new Date()
         var sess_id = Math.floor(Math.random() * 1000000000)
         var NumsamplesTest = Math.floor(Math.random() * 1000)
-        this.sessions.push({uid: this.user.uid, date: currentTime, data: null, id:sess_id, numSamples: NumsamplesTest })
+        this.sessions.push({uid: this.user.uid, date: currentTime, data: null, sessionID:sess_id, numSamples: NumsamplesTest })
         Numsamples = Numsamples + NumsamplesTest
       }
       
@@ -101,8 +101,9 @@ export class ConnectPage implements OnInit {
     console.log(msg)
 
     let sess = null
+    console.log(this.sessions)
     for (let idx = 0; idx < this.sessions.length; idx++){
-      if(this.sessions[idx].id == i){
+      if(this.sessions[idx].sessionID == i){
         sess = this.sessions[idx]
       }
     }
@@ -118,7 +119,7 @@ export class ConnectPage implements OnInit {
           }
         }
         for (let idx = 0; idx < this.sessions.length; idx++){
-          if(this.sessions[idx].id == i){
+          if(this.sessions[idx].sessionID == i){
             this.sessions.splice(idx, 1);
           }
         }
@@ -149,7 +150,7 @@ export class ConnectPage implements OnInit {
         }
       }
       for (let idx = 0; idx < this.sessions.length; idx++){
-        if(this.sessions[idx].id == i){
+        if(this.sessions[idx].sessionID == i){
           this.sessions.splice(idx, 1);
         }
       }

@@ -111,7 +111,7 @@ export class BluetoothService {
     this.currentLoadPercent = 0
     var numPackets = Math.ceil(sess.numSamples / (this.packetSize / this.numMetrics))
     var recievedPackets = 0
-    var msg = "Requested data stream: " + sess.id
+    var msg = "Requested data stream: " + sess.sessionID
     console.log(msg)
 
     var summaryPointsPerPacket = Math.ceil(this.pointsPerGraph / numPackets)
@@ -146,7 +146,7 @@ export class BluetoothService {
           }
         }
         if(!writeLocal){
-          this.dataService.addRawPacket({sessionID: sess.id, idx: i, data: res}).then((res) => {
+          this.dataService.addRawPacket({sessionID: sess.sessionID, idx: i, data: res}).then((res) => {
             recievedPackets++
             this.currentLoadPercent = recievedPackets / numPackets
           })

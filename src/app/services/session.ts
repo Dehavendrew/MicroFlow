@@ -4,12 +4,17 @@ export interface Session {
     data: number[]
     tempdata?: number[]
     indexes?: number[]
-    id?: number
+    sessionID?: number
     numSamples?: number
 }
 
 export interface RawDataPacket {
     sessionID: number,
     idx: number,
+    data: number[]
+}
+
+export interface BreathingRateSession {
+    sessionID: number,
     data: number[]
 }

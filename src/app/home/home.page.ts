@@ -37,6 +37,7 @@ export class HomePage {
   }
 
   LoadGraphs(){ 
+    this.modeSelected = []
     this.lineCanvas.toArray().forEach((el,idx) => {
       this.modeSelected.push("airflow")
       let sessData = this.sessions[idx].data
@@ -154,6 +155,18 @@ export class HomePage {
     await modal.present();
   }
 
+  async openAnalysis(graph_id, session){
+    const modal = await this.modalCtrl.create({
+      component: ModalPage,
+      componentProps: { id: graph_id, session: session},
+      breakpoints: [0, 0.5, 0.8],
+      initialBreakpoint: 0.8
+
+    })
+
+    await modal.present();
+  }
+
   airFlowClick(id){
     this.modeSelected[id] = "airflow"
     let sessData = this.sessions[id].data
@@ -189,10 +202,34 @@ export class HomePage {
     this.lineChart[id].update()
   }
 
-  analysisClick(id){
-    this.modeSelected[id] = "analysis"
-    console.log(id)
-    console.log("Analysis Clicked")
+  async analysisClick(id){
+    await this.dataService.getBreathingById(this.sessions[id].sessionID).subscribe((res) => {
+      if(res.length == 0){
+        this.openAnalysis(id, this.sessions[id]).then(res => {
+          console.log("dataLoaded")
+        })
+      }
+      else{
+        this.modeSelected[id] = "analysis"
+
+        let sessData = res[0].data
+        let labels = Array.from(Array(sessData.length).keys())
+        for(var i = 0, length = labels.length; i < length; ++i){
+          labels[i] = labels[i] * 12.4
+        }
+
+        this.lineChart[id].data.labels = labels
+        this.lineChart[id].data.datasets = [{
+          label: 'Breathing Rate',
+          data: sessData,
+          fill: false,
+          borderColor: 'rgb(255, 203, 43)',
+          tension: 0.1
+        }]
+
+        this.lineChart[id].update()
+      }
+    })
   }
 
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Firestore, collection, collectionData, doc, docData, addDoc, deleteDoc, updateDoc, query, where } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, doc, docData, addDoc, deleteDoc, updateDoc, query, where, orderBy } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
-import { Session, RawDataPacket } from './session';
+import { Session, RawDataPacket, BreathingRateSession } from './session';
 
 
 export interface Note{
@@ -28,13 +28,25 @@ export class DataService {
 
   getSessions(uid): Observable<Session[]>{
     const sessRef = collection(this.firestore, 'sessions');
-    const userSessRef = query(sessRef, where("uid", "==", uid));
+    const userSessRef = query(sessRef, where("uid", "==", uid), orderBy("date", 'desc'));
     return collectionData(userSessRef, { idField: 'id'}) as Observable<Session[]>;
   }
 
   getNoteById(id):Observable<Note>{
     const noteDocRef = doc(this.firestore, `notes/${id}`);
     return docData(noteDocRef, { idField: 'id'}) as Observable<Note>;
+  }
+
+  getBreathingById(id):Observable<BreathingRateSession[]>{
+    const sessref = collection(this.firestore, `breathingRates`);
+    const breathingRef = query(sessref, where("sessionID", "==", id))
+    return collectionData(breathingRef, { idField: 'id'}) as Observable<BreathingRateSession[]>;
+  }
+
+  getPacketsForSession(id):Observable<RawDataPacket[]>{
+    const packetRef = collection(this.firestore, 'packets');
+    const packetSessRef = query(packetRef, where("sessionID", "==", id), orderBy("idx"));
+    return collectionData(packetSessRef, { idField: 'id'}) as Observable<RawDataPacket[]>;
   }
 
   addNote(note: Note){
@@ -45,6 +57,11 @@ export class DataService {
   addSession(session: Session){
     const sessionRef = collection(this.firestore, 'sessions');
     return addDoc(sessionRef, session)
+  }
+
+  addBreathingRate(session: BreathingRateSession){
+    const BreathingRef = collection(this.firestore, 'breathingRates');
+    return addDoc(BreathingRef, session)
   }
 
   addRawPacket(packet: RawDataPacket){

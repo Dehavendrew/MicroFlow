@@ -77,15 +77,15 @@
 
     <ion-row class="row_center" [ngStyle]="{'visibility':DownloadLocal && isQueried ? 'visible' : 'hidden'}" *ngFor="let session of sessions; let i = index">
       <ion-col class="row_center" class="results">
-        Session: {{ session.id }} <br>
+        Session: {{ session.sessionID }} <br>
         Date: {{ session.date | date:'medium' }} <br>
         Duration: {{ session.numSamples / 10 }} seconds <br>
         Size: {{ session.numSamples * bleService.numMetrics / 1000 }} kB
       </ion-col>
       <ion-col class="row_center">
-        <ion-icon class="small-pad" name="cloud-upload-outline" (click)="cloudWrite(session.id)"></ion-icon>
-        <ion-icon class="small-pad" name="folder-outline" (click)="localWrite(session.id)"></ion-icon>
-        <ion-icon class="small-pad" name="trash-outline" (click)="delete(session.id)"></ion-icon>
+        <ion-icon class="small-pad" name="cloud-upload-outline" (click)="cloudWrite(session.sessionID)"></ion-icon>
+        <ion-icon class="small-pad" name="folder-outline" (click)="localWrite(session.sessionID)"></ion-icon>
+        <ion-icon class="small-pad" name="trash-outline" (click)="delete(session.sessionID)"></ion-icon>
       </ion-col>
     </ion-row>
 
