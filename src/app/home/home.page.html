@@ -10,7 +10,25 @@
   <ion-list>
     <ion-item *ngFor="let session of sessions; let i = index">
       <ion-label>
-        <canvas id="canvas{{i}}" #charts></canvas>
+        <ion-card>
+          <ion-card-title class="title">
+            Workout from {{ session.date.toDate() | date: 'short' }}
+          </ion-card-title>
+          <ion-grid class="center_text" id="selector{{i}}">
+            <ion-row>
+              <ion-col class="left" [ngStyle]="modeSelected[i] =='airflow'?{'color': '#4989ff'} : {'color': '#8c8c8c'}" (click)="airFlowClick(i)">
+                Air Flow
+              </ion-col>
+              <ion-col class="center" [ngStyle]="modeSelected[i] =='temp'?{'color': 'rgb(255, 166, 17)'} : {'color': '#8c8c8c'}" (click)="tempClick(i)">
+                Temperature
+              </ion-col>
+              <ion-col class="right" [ngStyle]="modeSelected[i] =='analysis'?{'color': 'rgb(255, 203, 43)'} : {'color': '#8c8c8c'}" (click)="analysisClick(i)">
+                Analysis
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+          <canvas id="canvas{{i}}" #charts></canvas>
+        </ion-card>
       </ion-label>
     </ion-item>
   </ion-list>

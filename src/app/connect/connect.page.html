@@ -79,7 +79,8 @@
       <ion-col class="row_center" class="results">
         Session: {{ session.id }} <br>
         Date: {{ session.date | date:'medium' }} <br>
-        Duration: {{ session.numSamples / 10 }} seconds
+        Duration: {{ session.numSamples / 10 }} seconds <br>
+        Size: {{ session.numSamples * bleService.numMetrics / 1000 }} kB
       </ion-col>
       <ion-col class="row_center">
         <ion-icon class="small-pad" name="cloud-upload-outline" (click)="cloudWrite(session.id)"></ion-icon>

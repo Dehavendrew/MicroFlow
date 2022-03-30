@@ -25,3 +25,35 @@
 #container a {
   text-decoration: none;
 }
+
+.center_text{
+  justify-content: center;
+  text-align: center;
+}
+
+.left{
+  border-right: #8c8c8c;
+}
+
+.center{
+  border-left: #8c8c8c;
+  border-right: #8c8c8c;
+  border-style: solid;
+  border-left-width: 1px;
+  border-right-width: 1px;
+  border-top-width: 0px ;
+  border-bottom-width: 0px ;
+  margin: 1px;
+}
+
+.right{
+  border-left: #8c8c8c;
+}
+
+.title{
+  margin-left: 10px;
+  margin-top: 10px;
+  margin-bottom: 5px;
+  font-size: 10pt;
+  font-weight: bold;
+}

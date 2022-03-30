@@ -9,7 +9,7 @@ import { User } from '../services/user';
 import { Session } from '../services/session';
 import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/compat/firestore';
 import { docData, doc, Firestore } from '@angular/fire/firestore';
-import { Chart, registerables } from 'chart.js';
+import { Chart, registerables, TooltipLabelStyle } from 'chart.js';
 
 @Component({
   selector: 'app-home',
@@ -22,7 +22,10 @@ export class HomePage {
   sessions: Session[] = [];
   user: any;
   auth_user: any;
-  userSub: any
+  userSub: any;
+
+  modeSelected: string[] = [];
+
 
   @ViewChildren("charts") lineCanvas: any;
   private lineChart: Chart[] = [];
@@ -35,8 +38,12 @@ export class HomePage {
 
   LoadGraphs(){ 
     this.lineCanvas.toArray().forEach((el,idx) => {
+      this.modeSelected.push("airflow")
       let sessData = this.sessions[idx].data
-      let labels = Array.from(Array(sessData.length).keys())
+      let labels = this.sessions[idx].indexes
+      for(var i = 0, length = labels.length; i < length; ++i){
+        labels[i] = labels[i] / 10
+      }
       this.lineChart.push(new Chart(el.nativeElement, {
         type:"line",
         data: {
@@ -45,7 +52,7 @@ export class HomePage {
           label: 'Air Flow (m/s)',
           data: sessData,
           fill: false,
-          borderColor: 'rgb(80, 00, 00)',
+          borderColor: 'rgb(73, 138, 255)',
           tension: 0.1
         }]}
       }))
@@ -145,6 +152,47 @@ export class HomePage {
     })
 
     await modal.present();
+  }
+
+  airFlowClick(id){
+    this.modeSelected[id] = "airflow"
+    let sessData = this.sessions[id].data
+    let labels = this.sessions[id].indexes
+
+    this.lineChart[id].data.labels = labels
+    this.lineChart[id].data.datasets = [{
+      label: 'Air Flow (m/s)',
+      data: sessData,
+      fill: false,
+      borderColor: 'rgb(73, 138, 255)',
+      tension: 0.1
+    }]
+
+    this.lineChart[id].update()
+  }
+
+  tempClick(id){
+    this.modeSelected[id] = "temp"
+
+    let sessData = this.sessions[id].tempdata
+    let labels = this.sessions[id].indexes
+
+    this.lineChart[id].data.labels = labels
+    this.lineChart[id].data.datasets = [{
+      label: 'Temperature (C)',
+      data: sessData,
+      fill: false,
+      borderColor: 'rgb(255, 166, 17)',
+      tension: 0.1
+    }]
+
+    this.lineChart[id].update()
+  }
+
+  analysisClick(id){
+    this.modeSelected[id] = "analysis"
+    console.log(id)
+    console.log("Analysis Clicked")
   }
 
 }
