@@ -19,6 +19,6 @@ export class MLService {
 
       this.dataService.addBreathingRate({sessionID: id, data: breathingRate})
     })
-
+    return {sessionID: id, data: breathingRate}
   }
 }

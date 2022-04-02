@@ -135,7 +135,7 @@ export class BluetoothService {
           for(let j = 0; j < summaryPointsPerPacket; ++j){
             summaryArray.push(average(res.slice(sizePointGap*j,sizePointGap*j + sizePointGap)))
             tempsummaryArray.push(average(res.slice((this.packetSize / this.numMetrics) + sizePointGap*j,(this.packetSize / this.numMetrics) + sizePointGap*j + sizePointGap)))
-            indexArray.push(Math.ceil(sizePointGap * j + i * (this.packetSize / this.numMetrics) / 2))
+            indexArray.push(Math.ceil((sizePointGap * j) + (i * (this.packetSize / this.numMetrics))))
           }
         }
         else{

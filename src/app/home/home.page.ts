@@ -10,6 +10,8 @@ import { Session } from '../services/session';
 import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/compat/firestore';
 import { docData, doc, Firestore } from '@angular/fire/firestore';
 import { Chart, registerables, TooltipLabelStyle } from 'chart.js';
+import { MLService } from '../services/ml.service';
+import { ToastController } from '@ionic/angular';
 
 @Component({
   selector: 'app-home',
@@ -31,13 +33,14 @@ export class HomePage {
   private lineChart: Chart[] = [];
 
 
-  constructor(private firestore: Firestore, public afs: AngularFirestore, private dataService: DataService, private cd: ChangeDetectorRef, private alertCtrl: AlertController, private modalCtrl: ModalController,  public afAuth: AngularFireAuth, public authService: AuthService) {
+  constructor(private toastCtrl: ToastController, private mlService: MLService, private firestore: Firestore, public afs: AngularFirestore, private dataService: DataService, private cd: ChangeDetectorRef, private alertCtrl: AlertController, private modalCtrl: ModalController,  public afAuth: AngularFireAuth, public authService: AuthService) {
     this.authStatusListener()  
     Chart.register(...registerables);
   }
 
   LoadGraphs(){ 
     this.modeSelected = []
+    this.lineChart = []
     this.lineCanvas.toArray().forEach((el,idx) => {
       this.modeSelected.push("airflow")
       let sessData = this.sessions[idx].data
@@ -83,6 +86,7 @@ export class HomePage {
 
   setData(uid){
     this.dataService.getSessions(uid).subscribe((res) => {
+      this.modeSelected = []
       this.sessions = res;
       this.cd.detectChanges()
       this.LoadGraphs();
@@ -186,7 +190,6 @@ export class HomePage {
 
   tempClick(id){
     this.modeSelected[id] = "temp"
-
     let sessData = this.sessions[id].tempdata
     let labels = this.sessions[id].indexes
 
@@ -199,37 +202,93 @@ export class HomePage {
       tension: 0.1
     }]
 
+
     this.lineChart[id].update()
+  }
+
+  plotAnalysis(ress, id){
+    if(ress){
+      this.modeSelected[id] = "analysis"
+  
+      let sessData = ress.data
+      let sumarizedIndexes = Array.from(Array(sessData.length).keys())
+      
+      if(sessData.length > 20){
+        let sumarizedData = []
+        sumarizedIndexes = []
+
+        for(let i = 0; i < 20; ++i){
+          sumarizedIndexes.push(Math.floor((i * sessData.length / 20)))
+        }
+        for(let i = 0; i < 20; ++i){
+          sumarizedData.push(sessData[i])
+        }
+        for(let i = 0; i < 20; ++i){
+          sumarizedIndexes[i] = Math.floor(sumarizedIndexes[i])
+        }
+        sessData = sumarizedData
+      }
+      let labels = sumarizedIndexes
+      for(var i = 0, length = labels.length; i < length; ++i){
+        labels[i] = labels[i] * 12.4
+      }
+  
+      this.lineChart[id].data.labels = labels
+      this.lineChart[id].data.datasets = [{
+        label: 'Breathing Rate',
+        data: sessData,
+        fill: false,
+        borderColor: 'rgb(255, 203, 43)',
+        tension: 0.1
+      }]
+  
+      this.lineChart[id].update()
+    }
   }
 
   async analysisClick(id){
     await this.dataService.getBreathingById(this.sessions[id].sessionID).subscribe((res) => {
       if(res.length == 0){
-        this.openAnalysis(id, this.sessions[id]).then(res => {
-          console.log("dataLoaded")
+        this.mlService.analyizeData(this.sessions[id]).then((br) => {
+          this.plotAnalysis(br, id)
         })
+        
       }
       else{
-        this.modeSelected[id] = "analysis"
-
-        let sessData = res[0].data
-        let labels = Array.from(Array(sessData.length).keys())
-        for(var i = 0, length = labels.length; i < length; ++i){
-          labels[i] = labels[i] * 12.4
-        }
-
-        this.lineChart[id].data.labels = labels
-        this.lineChart[id].data.datasets = [{
-          label: 'Breathing Rate',
-          data: sessData,
-          fill: false,
-          borderColor: 'rgb(255, 203, 43)',
-          tension: 0.1
-        }]
-
-        this.lineChart[id].update()
+        this.plotAnalysis(res[0], id)
       }
     })
+  }
+
+  async onChange(event, idx){
+    let data = []
+    let numPoints = 20
+
+    let indexes = []
+    for(let i = 0; i < numPoints; ++i){
+      indexes.push(event.target.value.lower + Math.floor(i * (event.target.value.upper - event.target.value.lower) / 20))
+    }
+
+    await this.dataService.getPacketsForSession(this.sessions[idx].sessionID).subscribe((res) => {
+      for(let i = 0; i < numPoints; ++i){
+        data.push(res[Math.floor(indexes[i] / 125)].data[indexes[i] % 125])
+      }
+
+      console.log(data)
+
+
+      this.lineChart[idx].data.labels = indexes
+      this.lineChart[idx].data.datasets = [{
+        label: 'Air Flow (m/s)',
+        data: data,
+        fill: false,
+        borderColor: 'rgb(73, 138, 255)',
+        tension: 0.1
+      }]
+
+      this.lineChart[idx].update()
+    })
+
   }
 
 }
