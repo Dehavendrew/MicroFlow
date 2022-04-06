@@ -24,10 +24,10 @@ export class BluetoothService {
 
   async sendPacketTest(i): Promise<number[]>{
     var dataArray: number[] = []
-    for (let i = 0; i < this.packetSize / this.numMetrics; i++) {
-      dataArray.push(4 * Math.sin(2*3.1415* 0.1 * i) + Math.random() + 8)
+    for (let idx = 0; idx < this.packetSize / this.numMetrics; idx++) {
+      dataArray.push(4 * Math.sin(2*3.1415* 0.01 * (i + 2) * idx) + Math.random() + 8)
     }
-    for (let i = 0; i < this.packetSize / this.numMetrics; i++) {
+    for (let idx = 0; idx < this.packetSize / this.numMetrics; idx++) {
       dataArray.push(32 + Math.random())
     }
 

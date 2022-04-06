@@ -30,6 +30,7 @@ export class HomePage {
 
 
   @ViewChildren("charts") lineCanvas: any;
+  @ViewChildren("nobs") nobList: any;
   private lineChart: Chart[] = [];
 
 
@@ -45,6 +46,8 @@ export class HomePage {
       this.modeSelected.push("airflow")
       let sessData = this.sessions[idx].data
       let labels = this.sessions[idx].indexes
+      this.nobList.toArray()[idx].value = this.sessions[idx].numSamples 
+      this.nobList.toArray()[idx].color = 'blue'
       for(var i = 0, length = labels.length; i < length; ++i){
         labels[i] = labels[i] / 10
       }
@@ -172,6 +175,7 @@ export class HomePage {
   }
 
   airFlowClick(id){
+
     this.modeSelected[id] = "airflow"
     let sessData = this.sessions[id].data
     let labels = this.sessions[id].indexes
@@ -185,10 +189,15 @@ export class HomePage {
       tension: 0.1
     }]
 
-    this.lineChart[id].update()
+    this.lineChart[id].update() 
+    this.nobList.toArray()[id].color = 'blue'
+    if(this.nobList.toArray()[id].value.lower && this.nobList.toArray()[id].value.upper){
+      this.updateTimeAxis(this.nobList.toArray()[id].value.lower, this.nobList.toArray()[id].value.upper, id)
+    }
   }
 
   tempClick(id){
+
     this.modeSelected[id] = "temp"
     let sessData = this.sessions[id].tempdata
     let labels = this.sessions[id].indexes
@@ -204,45 +213,58 @@ export class HomePage {
 
 
     this.lineChart[id].update()
+    this.nobList.toArray()[id].color = 'orange'
+    if(this.nobList.toArray()[id].value.lower && this.nobList.toArray()[id].value.upper){
+      this.updateTimeAxis(this.nobList.toArray()[id].value.lower, this.nobList.toArray()[id].value.upper, id)
+    }
   }
 
-  plotAnalysis(ress, id){
+  plotAnalysis(ress, id, low=0, high=-1){
     if(ress){
       this.modeSelected[id] = "analysis"
   
-      let sessData = ress.data
-      let sumarizedIndexes = Array.from(Array(sessData.length).keys())
-      
-      if(sessData.length > 20){
+      let brData = ress.data
+      let selectedIndexes = []
+      let selectedData = []
+      if(high != -1){
+        for(let i = 0; i < brData.length; ++i){
+          if(i * 12.4 > low && i * 12.4 < high){
+            selectedIndexes.push(i * 12.4)
+            selectedData.push(brData[i])
+          }
+        }
+      }
+      else{
+        selectedData = brData
+        selectedIndexes = Array.from(Array(brData.length).keys())
+        for(let i = 0; i < brData.length; ++i){
+          selectedIndexes[i] = selectedIndexes[i] * 12.4
+        }
+      }
+
+      if(selectedData.length > 20){
         let sumarizedData = []
-        sumarizedIndexes = []
+        let sumarizedIndexes = []
 
         for(let i = 0; i < 20; ++i){
-          sumarizedIndexes.push(Math.floor((i * sessData.length / 20)))
+          sumarizedData.push(selectedData[i *Math.floor(selectedData.length / 20)])
+          sumarizedIndexes.push(selectedIndexes[i *Math.floor(selectedData.length / 20)])
         }
-        for(let i = 0; i < 20; ++i){
-          sumarizedData.push(sessData[i])
-        }
-        for(let i = 0; i < 20; ++i){
-          sumarizedIndexes[i] = Math.floor(sumarizedIndexes[i])
-        }
-        sessData = sumarizedData
-      }
-      let labels = sumarizedIndexes
-      for(var i = 0, length = labels.length; i < length; ++i){
-        labels[i] = labels[i] * 12.4
+        selectedData = sumarizedData
+        selectedIndexes = sumarizedIndexes
       }
   
-      this.lineChart[id].data.labels = labels
+      this.lineChart[id].data.labels = selectedIndexes
       this.lineChart[id].data.datasets = [{
-        label: 'Breathing Rate',
-        data: sessData,
+        label: 'Breathing Rate (Per Minute)',
+        data: selectedData,
         fill: false,
         borderColor: 'rgb(255, 203, 43)',
         tension: 0.1
       }]
   
       this.lineChart[id].update()
+      this.nobList.toArray()[id].color = 'yellow'
     }
   }
 
@@ -250,45 +272,88 @@ export class HomePage {
     await this.dataService.getBreathingById(this.sessions[id].sessionID).subscribe((res) => {
       if(res.length == 0){
         this.mlService.analyizeData(this.sessions[id]).then((br) => {
-          this.plotAnalysis(br, id)
+          if(this.nobList.toArray()[id].value.upper){
+            this.plotAnalysis(br, id,this.nobList.toArray()[id].value.lower, this.nobList.toArray()[id].value.upper)
+          }
+          else{
+            this.plotAnalysis(br, id)
+          }
         })
         
       }
       else{
-        this.plotAnalysis(res[0], id)
+        if(this.nobList.toArray()[id].value.upper){
+          this.plotAnalysis(res[0], id,this.nobList.toArray()[id].value.lower, this.nobList.toArray()[id].value.upper)
+        }
+        else{
+          this.plotAnalysis(res[0], id)
+        }
       }
     })
   }
 
-  async onChange(event, idx){
+  async updateTimeAxis(low, high, idx){
     let data = []
     let numPoints = 20
 
     let indexes = []
     for(let i = 0; i < numPoints; ++i){
-      indexes.push(event.target.value.lower + Math.floor(i * (event.target.value.upper - event.target.value.lower) / 20))
+      indexes.push(low + Math.floor(i * (high - low) / 20))
     }
 
-    await this.dataService.getPacketsForSession(this.sessions[idx].sessionID).subscribe((res) => {
-      for(let i = 0; i < numPoints; ++i){
-        data.push(res[Math.floor(indexes[i] / 125)].data[indexes[i] % 125])
-      }
 
-      console.log(data)
+    if(this.modeSelected[idx] != "analysis"){
+      await this.dataService.getPacketsForSession(this.sessions[idx].sessionID).subscribe((res) => {
+        for(let i = 0; i < numPoints; ++i){
+          if(this.modeSelected[idx] == "temp"){
+            data.push(res[Math.floor(indexes[i] / 125)].data[125 + indexes[i] % 125])
+          }
+          else{
+            data.push(res[Math.floor(indexes[i] / 125)].data[indexes[i] % 125])
+          }
+        }
+  
+  
+        this.lineChart[idx].data.labels = indexes
+        if(this.modeSelected[idx] != "temp"){
+          this.lineChart[idx].data.datasets = [{
+            label: 'Air Flow (m/s)',
+            data: data,
+            fill: false,
+            borderColor: 'rgb(73, 138, 255)',
+            tension: 0.1
+          }]
+        }
+        else{
+          this.lineChart[idx].data.datasets = [{
+            label: 'Temperature (C)',
+            data: data,
+            fill: false,
+            borderColor: 'rgb(255, 166, 17)',
+            tension: 0.1
+          }]
+        }
+  
+        this.lineChart[idx].update()
+      })
+    }
+    else{
+      await this.dataService.getBreathingById(this.sessions[idx].sessionID).subscribe((res) => {
+        if(res.length == 0){
+          this.mlService.analyizeData(this.sessions[idx]).then((br) => {
+            this.plotAnalysis(br, idx, low, high)
+          })
+          
+        }
+        else{
+          this.plotAnalysis(res[0], idx, low, high)
+        }
+      })
+    }
+  }
 
-
-      this.lineChart[idx].data.labels = indexes
-      this.lineChart[idx].data.datasets = [{
-        label: 'Air Flow (m/s)',
-        data: data,
-        fill: false,
-        borderColor: 'rgb(73, 138, 255)',
-        tension: 0.1
-      }]
-
-      this.lineChart[idx].update()
-    })
-
+  async onChange(event, idx){
+    this.updateTimeAxis(event.target.value.lower,event.target.value.upper, idx)
   }
 
 }

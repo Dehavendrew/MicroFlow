@@ -24,3 +24,52 @@
 @import "~@ionic/angular/css/text-alignment.css";
 @import "~@ionic/angular/css/text-transformation.css";
 @import "~@ionic/angular/css/flex-utils.css";
+
+:root {
+    --ion-color-gold: #498aff;
+    --ion-color-gold-rgb: 73, 138, 255;
+    --ion-color-gold-contrast: #000000;
+    --ion-color-gold-contrast-rgb: 0, 0, 0;
+    --ion-color-gold-shade: #498aff;
+    --ion-color-gold-tint: #498aff;
+
+    --ion-color-orange: #ffa811;
+    --ion-color-orange-rgb: 255, 166, 17;
+    --ion-color-orange-contrast: #000000;
+    --ion-color-orange-contrast-rgb: 0, 0, 0;
+    --ion-color-orange-shade: #ffa811;
+    --ion-color-orange-tint: #ffa811;
+
+    --ion-color-yellow: #ffcb2b;
+    --ion-color-yellow-rgb: 255, 203, 43;
+    --ion-color-yellow-contrast: #000000;
+    --ion-color-yellow-contrast-rgb: 0, 0, 0;
+    --ion-color-yellow-shade: #ffcb2b;
+    --ion-color-yellow-tint: #ffcb2b;
+}
+.ion-color-blue {
+    --ion-color-base: var(--ion-color-gold) !important;
+    --ion-color-base-rgb: var(--ion-color-gold-rgb) !important;
+    --ion-color-contrast: var(--ion-color-gold-contrast) !important;
+    --ion-color-contrast-rgb: var(--ion-color-gold-contrast-rgb) !important;
+    --ion-color-shade: var(--ion-color-gold-shade) !important;
+    --ion-color-tint: var(--ion-color-gold-tint) !important;
+}
+
+.ion-color-orange {
+    --ion-color-base: var(--ion-color-orange) !important;
+    --ion-color-base-rgb: var(--ion-color-orange-rgb) !important;
+    --ion-color-contrast: var(--ion-color-orange-contrast) !important;
+    --ion-color-contrast-rgb: var(--ion-color-orange-contrast-rgb) !important;
+    --ion-color-shade: var(--ion-color-orange-shade) !important;
+    --ion-color-tint: var(--ion-color-orange-tint) !important;
+}
+
+.ion-color-yellow {
+    --ion-color-base: var(--ion-color-yellow) !important;
+    --ion-color-base-rgb: var(--ion-color-yellow-rgb) !important;
+    --ion-color-contrast: var(--ion-color-yellow-contrast) !important;
+    --ion-color-contrast-rgb: var(--ion-color-yellow-contrast-rgb) !important;
+    --ion-color-shade: var(--ion-color-yellow-shade) !important;
+    --ion-color-tint: var(--ion-color-yellow-tint) !important;
+}

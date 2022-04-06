@@ -29,9 +29,9 @@
           </ion-grid>
           <canvas id="canvas{{i}}" #charts></canvas>
           <ion-item>
-            <ion-range dual-knobs="true" min=0 max={{session.numSamples}} color="secondary" pin="true" step=1  (ionChange)="onChange($event, i)">
+            <ion-range #nobs id="nobs{{i}}" dual-knobs="true" min=0 max="{{session.numSamples / 10}}" color="secondary" pin="true" step=1  (ionChange)="onChange($event, i)">
               <ion-label slot="start">0</ion-label>
-              <ion-label slot="end">{{session.numSamples}}</ion-label>
+              <ion-label slot="end">{{session.numSamples / 10}}</ion-label>
             </ion-range>
           </ion-item>
         </ion-card>
