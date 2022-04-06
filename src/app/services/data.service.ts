@@ -74,8 +74,13 @@ export class DataService {
     return deleteDoc(noteDocRef);
   }
 
+  deleteSession(session: Session){
+    const noteDocRef = doc(this.firestore, `sessions/${session.id}`);
+    return deleteDoc(noteDocRef);
+  }
+
   updateNote(note: Note){
-    const noteDocRef = doc(this.firestore, `notes/${note.id}`);
+    const noteDocRef = doc(this.firestore, `notes`);
     return updateDoc(noteDocRef, {title: note.title, text: note.text});
   }
 

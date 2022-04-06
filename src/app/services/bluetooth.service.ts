@@ -17,15 +17,20 @@ export class BluetoothService {
 
   testFailureRate = 0.0
   unAckedPackets: Number [] = []
-  sentAckedPackets: Number [] = []
+  sentAckedPackets: Number [] = [] 
   
 
-  constructor(private dataService: DataService) { }
+  constructor(private dataService: DataService) { } 
 
   async sendPacketTest(i): Promise<number[]>{
     var dataArray: number[] = []
     for (let idx = 0; idx < this.packetSize / this.numMetrics; idx++) {
-      dataArray.push(4 * Math.sin(2*3.1415* 0.01 * (i + 2) * idx) + Math.random() + 8)
+      if(idx == 57){
+        dataArray.push(7.5)
+      }
+      else{
+        dataArray.push(1 * Math.sin(2*3.1415* 0.1 * idx) + 4)
+      }
     }
     for (let idx = 0; idx < this.packetSize / this.numMetrics; idx++) {
       dataArray.push(32 + Math.random())

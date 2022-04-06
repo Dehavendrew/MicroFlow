@@ -57,3 +57,24 @@
   font-size: 10pt;
   font-weight: bold;
 }
+
+.smallTxt{
+  font-size: 8pt;
+  color: #8c8c8c;
+}
+
+.small-pad {
+  padding-left: 10pt;
+  color: #8c8c8c;
+}
+
+.smallTxtBold{
+  font-size: 8pt;
+  color: #000000;
+}
+
+ion-item {
+  --padding-end: 0px;
+  --inner-padding-end: 0px;
+  // here other custom CSS from documentation
+}

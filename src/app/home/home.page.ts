@@ -27,6 +27,8 @@ export class HomePage {
   userSub: any;
 
   modeSelected: string[] = [];
+  eventsPerSession: object[][] = [];
+  eventsDroppedDown:boolean[] = []
 
 
   @ViewChildren("charts") lineCanvas: any;
@@ -42,8 +44,13 @@ export class HomePage {
   LoadGraphs(){ 
     this.modeSelected = []
     this.lineChart = []
+    this.eventsPerSession = []
+    this.eventsDroppedDown = []
     this.lineCanvas.toArray().forEach((el,idx) => {
       this.modeSelected.push("airflow")
+      this.eventsDroppedDown.push(false)
+      this.eventsPerSession.push([])
+      this.loadEvents(idx)
       let sessData = this.sessions[idx].data
       let labels = this.sessions[idx].indexes
       this.nobList.toArray()[idx].value = this.sessions[idx].numSamples 
@@ -90,6 +97,8 @@ export class HomePage {
   setData(uid){
     this.dataService.getSessions(uid).subscribe((res) => {
       this.modeSelected = []
+      this.eventsPerSession = []
+      this.eventsDroppedDown = []
       this.sessions = res;
       this.cd.detectChanges()
       this.LoadGraphs();
@@ -222,13 +231,12 @@ export class HomePage {
   plotAnalysis(ress, id, low=0, high=-1){
     if(ress){
       this.modeSelected[id] = "analysis"
-  
       let brData = ress.data
       let selectedIndexes = []
       let selectedData = []
       if(high != -1){
         for(let i = 0; i < brData.length; ++i){
-          if(i * 12.4 > low && i * 12.4 < high){
+          if((i * 12.4) > (low / 10) && (i * 12.4) < (high / 10)){
             selectedIndexes.push(i * 12.4)
             selectedData.push(brData[i])
           }
@@ -238,7 +246,7 @@ export class HomePage {
         selectedData = brData
         selectedIndexes = Array.from(Array(brData.length).keys())
         for(let i = 0; i < brData.length; ++i){
-          selectedIndexes[i] = selectedIndexes[i] * 12.4
+          selectedIndexes[i] = selectedIndexes[i] * 12.4 
         }
       }
 
@@ -264,8 +272,41 @@ export class HomePage {
       }]
   
       this.lineChart[id].update()
-      this.nobList.toArray()[id].color = 'yellow'
+      this.nobList.toArray()[id].color = 'yellow' 
     }
+  }
+
+  updateEvents(events, idx){
+    this.eventsPerSession[idx] = []
+    if(events){
+      events.localOutliers.forEach(val => {
+        this.eventsPerSession[idx].push({"eventType":"Local Spike","timeStamp":Math.round(val / 10 * 100) / 10})
+      })
+    }
+  }
+
+  plotAnomaly(time, idx){
+    this.nobList.toArray()[idx].value = {"lower":time-1,"upper":time+1}
+  }
+
+  plotNudgeLeft(idx){
+    if(this.nobList.toArray()[idx].value.lower && this.nobList.toArray()[idx].value.lower > 0){
+      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower-0.1,"upper":this.nobList.toArray()[idx].value.upper - 0.1}
+    }
+  }
+
+  plotNudgeRight(idx){
+    if(this.nobList.toArray()[idx].value.upper && this.nobList.toArray()[idx].value.upper < this.sessions[idx].numSamples){
+      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower+0.1,"upper":this.nobList.toArray()[idx].value.upper + 0.1}
+    }
+  }
+
+  async loadEvents(id){
+    await this.dataService.getBreathingById(this.sessions[id].sessionID).subscribe((res) => {
+      if(res.length != 0){
+        this.updateEvents(res[0], id)
+      }
+    })
   }
 
   async analysisClick(id){
@@ -273,34 +314,41 @@ export class HomePage {
       if(res.length == 0){
         this.mlService.analyizeData(this.sessions[id]).then((br) => {
           if(this.nobList.toArray()[id].value.upper){
-            this.plotAnalysis(br, id,this.nobList.toArray()[id].value.lower, this.nobList.toArray()[id].value.upper)
+            this.plotAnalysis(br, id,this.nobList.toArray()[id].value.lower * 10, this.nobList.toArray()[id].value.upper * 10)
+            this.updateEvents(br, id)
           }
           else{
             this.plotAnalysis(br, id)
+            this.updateEvents(br, id)
           }
         })
         
       }
       else{
         if(this.nobList.toArray()[id].value.upper){
-          this.plotAnalysis(res[0], id,this.nobList.toArray()[id].value.lower, this.nobList.toArray()[id].value.upper)
+          this.plotAnalysis(res[0], id,this.nobList.toArray()[id].value.lower * 10, this.nobList.toArray()[id].value.upper * 10)
+          this.updateEvents(res[0], id)
         }
         else{
           this.plotAnalysis(res[0], id)
+          this.updateEvents(res[0], id)
         }
       }
     })
   }
 
   async updateTimeAxis(low, high, idx){
+    low = low * 10
+    high = high * 10
     let data = []
     let numPoints = 20
 
     let indexes = []
+    let labels = []
     for(let i = 0; i < numPoints; ++i){
-      indexes.push(low + Math.floor(i * (high - low) / 20))
+      indexes.push(Math.round(low + Math.floor(i * (high - low) / 20)))
+      labels.push(Math.round((low + Math.floor(i * (high - low) / 20)) * 10) / 100)
     }
-
 
     if(this.modeSelected[idx] != "analysis"){
       await this.dataService.getPacketsForSession(this.sessions[idx].sessionID).subscribe((res) => {
@@ -314,7 +362,7 @@ export class HomePage {
         }
   
   
-        this.lineChart[idx].data.labels = indexes
+        this.lineChart[idx].data.labels = labels
         if(this.modeSelected[idx] != "temp"){
           this.lineChart[idx].data.datasets = [{
             label: 'Air Flow (m/s)',
@@ -354,6 +402,26 @@ export class HomePage {
 
   async onChange(event, idx){
     this.updateTimeAxis(event.target.value.lower,event.target.value.upper, idx)
+  }
+
+  delete(idx){
+    let msg = "Delete " + this.sessions[idx].sessionID
+    console.log(msg)
+    this.dataService.deleteSession(this.sessions[idx])
+  }
+
+  expandEvents(idx){
+    if(this.eventsDroppedDown[idx]){
+      this.eventsDroppedDown[idx] = false
+    }
+    else{
+      this.eventsDroppedDown[idx] = true
+    }
+  }
+
+  localWrite(idx){
+    let msg = "Local Write " + idx
+    console.log(msg)
   }
 
 }

@@ -25,15 +25,39 @@
               <ion-col class="right" [ngStyle]="modeSelected[i] =='analysis'?{'color': 'rgb(255, 203, 43)'} : {'color': '#8c8c8c'}" (click)="analysisClick(i)">
                 Analysis
               </ion-col>
-            </ion-row>
+            </ion-row>  
           </ion-grid>
           <canvas id="canvas{{i}}" #charts></canvas>
-          <ion-item>
-            <ion-range #nobs id="nobs{{i}}" dual-knobs="true" min=0 max="{{session.numSamples / 10}}" color="secondary" pin="true" step=1  (ionChange)="onChange($event, i)">
-              <ion-label slot="start">0</ion-label>
-              <ion-label slot="end">{{session.numSamples / 10}}</ion-label>
-            </ion-range>
-          </ion-item>
+            <ion-grid> 
+              <ion-row>
+                <ion-range #nobs id="nobs{{i}}" dual-knobs="true" min=0 max="{{session.numSamples / 10}}" color="secondary" pin="true" step=0.1  (ionChange)="onChange($event, i)">
+                  <ion-label slot="start" (click)="plotNudgeLeft(i)">0</ion-label>
+                  <ion-label slot="end"   (click)="plotNudgeRight(i)">{{session.numSamples / 10}}</ion-label>
+                </ion-range>
+              </ion-row>
+              <ion-row>
+                <ion-icon class="small-pad" name="arrow-back-outline" (click)="plotNudgeLeft(i)"></ion-icon>
+                <div *ngIf="eventsDroppedDown[i]; else elseBlock">
+                  <ion-icon class="small-pad" name="arrow-up-outline" (click)="expandEvents(i)"></ion-icon>
+                </div>
+                <ng-template #elseBlock>
+                  <ion-icon class="small-pad" name="arrow-down-outline" (click)="expandEvents(i)"></ion-icon>
+                </ng-template>
+                <ion-icon class="small-pad" name="arrow-forward-outline" (click)="plotNudgeRight(i)"></ion-icon>
+                <ion-icon class="small-pad" name="folder-outline" (click)="localWrite(i)"></ion-icon>
+                <ion-icon class="small-pad" name="trash-outline" (click)="delete(i)"></ion-icon>
+              </ion-row>
+            </ion-grid> 
+          <ion-grid *ngIf="eventsDroppedDown[i] && eventsPerSession[i] && eventsPerSession[i].length > 0" class="smallTxt"> 
+            <ion-row *ngFor="let event of eventsPerSession[i]" (click)="plotAnomaly(event.timeStamp, i)">
+                <ion-col>
+                  <span style="color:black">Event:</span> {{ event.eventType }}
+                </ion-col>
+                <ion-col>
+                  <span style="color:black">Time:</span> {{ event.timeStamp  }} (s)
+                </ion-col>
+            </ion-row>
+          </ion-grid>
         </ion-card>
       </ion-label>
     </ion-item>
