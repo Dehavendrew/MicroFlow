@@ -301,6 +301,30 @@ export class HomePage {
     }
   }
 
+  plotLeftNudgeLeft(idx){
+    if(this.nobList.toArray()[idx].value.lower && this.nobList.toArray()[idx].value.lower > 0){
+      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower-0.1,"upper":this.nobList.toArray()[idx].value.upper}
+    }
+  }
+
+  plotRightNudgeRight(idx){
+    if(this.nobList.toArray()[idx].value.upper && this.nobList.toArray()[idx].value.upper < this.sessions[idx].numSamples){
+      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower,"upper":this.nobList.toArray()[idx].value.upper + 0.1}
+    }
+  }
+
+  plotLeftNudgeRight(idx){
+    if(this.nobList.toArray()[idx].value.lower && this.nobList.toArray()[idx].value.lower > 0){
+      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower + 0.1,"upper":this.nobList.toArray()[idx].value.upper}
+    }
+  }
+
+  plotRightNudgeLeft(idx){
+    if(this.nobList.toArray()[idx].value.upper && this.nobList.toArray()[idx].value.upper < this.sessions[idx].numSamples){
+      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower,"upper":this.nobList.toArray()[idx].value.upper - 0.1}
+    }
+  }
+
   async loadEvents(id){
     await this.dataService.getBreathingById(this.sessions[id].sessionID).subscribe((res) => {
       if(res.length != 0){
@@ -310,31 +334,33 @@ export class HomePage {
   }
 
   async analysisClick(id){
-    await this.dataService.getBreathingById(this.sessions[id].sessionID).subscribe((res) => {
-      if(res.length == 0){
-        this.mlService.analyizeData(this.sessions[id]).then((br) => {
-          if(this.nobList.toArray()[id].value.upper){
-            this.plotAnalysis(br, id,this.nobList.toArray()[id].value.lower * 10, this.nobList.toArray()[id].value.upper * 10)
-            this.updateEvents(br, id)
-          }
-          else{
-            this.plotAnalysis(br, id)
-            this.updateEvents(br, id)
-          }
-        })
-        
-      }
-      else{
-        if(this.nobList.toArray()[id].value.upper){
-          this.plotAnalysis(res[0], id,this.nobList.toArray()[id].value.lower * 10, this.nobList.toArray()[id].value.upper * 10)
-          this.updateEvents(res[0], id)
+    if(this.nobList.toArray()[id] && this.sessions[id]){
+      await this.dataService.getBreathingById(this.sessions[id].sessionID).subscribe((res) => {
+        if(res.length == 0){
+          this.mlService.analyizeData(this.sessions[id]).then((br) => {
+            if(this.nobList.toArray()[id] && this.nobList.toArray()[id].value.upper){
+              this.plotAnalysis(br, id,this.nobList.toArray()[id].value.lower * 10, this.nobList.toArray()[id].value.upper * 10)
+              this.updateEvents(br, id)
+            }
+            else{
+              this.plotAnalysis(br, id)
+              this.updateEvents(br, id)
+            }
+          })
+          
         }
         else{
-          this.plotAnalysis(res[0], id)
-          this.updateEvents(res[0], id)
+          if(this.nobList.toArray()[id].value.upper){
+            this.plotAnalysis(res[0], id,this.nobList.toArray()[id].value.lower * 10, this.nobList.toArray()[id].value.upper * 10)
+            this.updateEvents(res[0], id)
+          }
+          else{
+            this.plotAnalysis(res[0], id)
+            this.updateEvents(res[0], id)
+          }
         }
-      }
-    })
+      })
+    }
   }
 
   async updateTimeAxis(low, high, idx){
@@ -405,9 +431,19 @@ export class HomePage {
   }
 
   delete(idx){
-    let msg = "Delete " + this.sessions[idx].sessionID
-    console.log(msg)
+    let sessID = this.sessions[idx].sessionID
+
     this.dataService.deleteSession(this.sessions[idx])
+    this.dataService.getPacketsForSession(sessID).subscribe((res) => {
+      res.forEach(val => {
+        this.dataService.deletePacket(val)
+      })
+    })
+    this.dataService.getBreathingById(sessID).subscribe((res) => {
+      res.forEach(val => {
+        this.dataService.deleteBreathingRate(val)
+      })
+    })
   }
 
   expandEvents(idx){

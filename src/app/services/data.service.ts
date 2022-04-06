@@ -79,6 +79,16 @@ export class DataService {
     return deleteDoc(noteDocRef);
   }
 
+  deletePacket(packet: RawDataPacket){
+    const noteDocRef = doc(this.firestore, `packets/${packet.id}`);
+    return deleteDoc(noteDocRef);
+  }
+
+  deleteBreathingRate(bRate: BreathingRateSession){
+    const noteDocRef = doc(this.firestore, `breathingRates/${bRate.id}`);
+    return deleteDoc(noteDocRef);
+  }
+
   updateNote(note: Note){
     const noteDocRef = doc(this.firestore, `notes`);
     return updateDoc(noteDocRef, {title: note.title, text: note.text});

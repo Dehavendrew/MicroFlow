@@ -36,6 +36,8 @@
                 </ion-range>
               </ion-row>
               <ion-row>
+                <ion-icon class="small-pad" name="chevron-back-outline" (click)="plotLeftNudgeLeft(i)"></ion-icon>
+                <ion-icon class="small-pad" name="chevron-forward-outline" (click)="plotLeftNudgeRight(i)"></ion-icon>
                 <ion-icon class="small-pad" name="arrow-back-outline" (click)="plotNudgeLeft(i)"></ion-icon>
                 <div *ngIf="eventsDroppedDown[i]; else elseBlock">
                   <ion-icon class="small-pad" name="arrow-up-outline" (click)="expandEvents(i)"></ion-icon>
@@ -44,6 +46,8 @@
                   <ion-icon class="small-pad" name="arrow-down-outline" (click)="expandEvents(i)"></ion-icon>
                 </ng-template>
                 <ion-icon class="small-pad" name="arrow-forward-outline" (click)="plotNudgeRight(i)"></ion-icon>
+                <ion-icon class="small-pad" name="chevron-back-outline" (click)="plotRightNudgeLeft(i)"></ion-icon>
+                <ion-icon class="small-pad" name="chevron-forward-outline" (click)="plotRightNudgeRight(i)"></ion-icon>
                 <ion-icon class="small-pad" name="folder-outline" (click)="localWrite(i)"></ion-icon>
                 <ion-icon class="small-pad" name="trash-outline" (click)="delete(i)"></ion-icon>
               </ion-row>
