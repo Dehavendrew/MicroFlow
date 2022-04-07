@@ -22,6 +22,21 @@ export class BluetoothService {
 
   constructor(private dataService: DataService) { } 
 
+  async requestLivePacket(): Promise<number[]>{
+    var dataArray: number[] = []
+    for (let idx = 0; idx < 25; idx++) {
+      dataArray.push(1 * Math.sin(2*3.1415* 0.1 * idx) + 4 + Math.random())
+    }
+    for (let idx = 0; idx < 25; idx++) {
+      dataArray.push(32 + Math.random())
+    }
+
+    return new Promise(res => {
+      res(dataArray)
+    })
+
+  }
+
   async sendPacketTest(i): Promise<number[]>{
     var dataArray: number[] = []
     for (let idx = 0; idx < this.packetSize / this.numMetrics; idx++) {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChildren } from '@angular/core';
 import { Session } from '../services/session';
 import { ToastController } from '@ionic/angular';
 import { DataService } from '../services/data.service';
@@ -7,6 +7,7 @@ import { AuthService } from '../services/auth.service';
 import { User } from '../services/user';
 import { Observable } from 'rxjs';
 import { BluetoothService } from '../services/bluetooth.service';
+import { Chart, registerables, TooltipLabelStyle } from 'chart.js';
 
 export interface Task {
   session: Session,
@@ -29,19 +30,33 @@ export class ConnectPage implements OnInit {
   isImporting: boolean
   isImported: boolean
   DownloadLocal: boolean
+  isModeSelected: boolean
+  LoadLiveData: boolean
+  UserStop: boolean
 
   deviceName: string
   numSessionsOnDisk: number
   numMinutesOnDisk: number
   sessions: Session[] = [];
+  Livesession: Session;
+
+  LiveStream: any;
+  rollingPlotData: number[] = []
+  subPacketsRecieved: number = 0;
+  packetData: number[] = []
+  packetTempData: number[] = []
 
   taskQueue: Task[] = []
 
   user: User
 
+  @ViewChildren("charts") lineCanvas: any;
+  private lineChart: Chart[] = [];
+
   constructor(private toastCtrl: ToastController, private dataService: DataService, public afAuth: AngularFireAuth, public authService: AuthService, private bleService: BluetoothService) {
     this.resetPairing()
     this.authStatusListener()
+    Chart.register(...registerables);
    }
 
   ngOnInit() {
@@ -63,7 +78,7 @@ export class ConnectPage implements OnInit {
     console.log("Searching For Device")
     this.isLoading = true
     return new Promise( resolve => {
-      setTimeout(resolve, 1000) 
+      setTimeout(resolve, 100) 
 
       this.deviceName = "Drew's Micro Flow"
     });
@@ -73,7 +88,7 @@ export class ConnectPage implements OnInit {
     console.log("Querying For Device")
     this.isQuerying = true;
     return new Promise( resolve => {
-      setTimeout(resolve, 1000) 
+      setTimeout(resolve, 100) 
 
       var Numsamples = 0
 
@@ -189,7 +204,108 @@ export class ConnectPage implements OnInit {
   }
 
   async loadOffline(){
+    this.isModeSelected = true
     this.DownloadLocal = true
+  }
+
+  addPacket(){
+    this.bleService.requestLivePacket().then(res => {
+      this.subPacketsRecieved = this.subPacketsRecieved + 1
+      this.packetData = this.packetData.concat(res.slice(0,25))
+      this.packetTempData = this.packetTempData.concat(res.slice(25,50))
+
+      if(this.subPacketsRecieved == 5){
+        this.subPacketsRecieved = 0
+        this.dataService.addRawPacket({sessionID: this.Livesession.sessionID, idx: Math.floor(this.Livesession.numSamples / 150), data: this.packetData.concat(this.packetTempData)})
+        this.packetData = []
+        this.packetTempData = []
+      }
+
+      let labels = Array.from(Array(25).keys())
+      this.rollingPlotData.shift()
+      this.rollingPlotData.push(res[0])
+      let sessData = this.rollingPlotData
+
+      this.lineChart[0].data.labels = labels
+      this.lineChart[0].data.datasets = [{
+            label: 'Air Flow (m/s)',
+            data: sessData,
+            fill: false,
+            borderColor: 'rgb(73, 138, 255)',
+            tension: 0.1
+      }]
+        
+      this.lineChart[0].update()
+      this.Livesession.numSamples = this.Livesession.numSamples + 25
+    })
+  }
+
+  LiveDataCollection(){
+    if(this.UserStop){
+      return
+    }
+    this.addPacket()
+    return new Promise( resolve => {
+      setTimeout(resolve => {
+        this.LiveDataCollection()
+      }, 2500)
+    })
+  }
+
+  async stopOnline(){
+    this.UserStop = true
+    let indexes = []
+    let tempData = []
+    let data = []
+    for(let i = 0; i < 20; ++i){
+      indexes.push(Math.round(Math.floor(i * (this.Livesession.numSamples) / 20)))
+    }
+    await this.dataService.getPacketsForSession(this.Livesession.sessionID).subscribe((res) => {
+      for(let i = 0; i < 20; ++i){
+        tempData.push(res[Math.floor(indexes[i] / 125)].data[125 + indexes[i] % 125])
+        data.push(res[Math.floor(indexes[i] / 125)].data[indexes[i] % 125])
+      }
+
+      this.Livesession.tempdata = tempData
+      this.Livesession.data = data
+      this.Livesession.indexes = indexes
+      this.dataService.addSession(this.Livesession)
+    })
+  }
+
+  startOnline(){
+    this.isModeSelected= true
+    this.LoadLiveData = true
+
+    var currentTime = new Date()
+    var sess_id = Math.floor(Math.random() * 1000000000)
+
+    this.Livesession = {uid: this.user.uid, date: currentTime, data: null, sessionID:sess_id, numSamples: 0 }
+
+    let labels = Array.from(Array(25).keys())
+    this.rollingPlotData = Array(25)
+
+    this.lineCanvas.toArray().forEach((el,idx) => {
+      this.lineChart.push(new Chart(el.nativeElement, {
+        type:"line",
+        options:{
+          animation:{
+            duration: 0
+          }
+        },
+        data: {
+          labels: labels,
+          datasets: [{
+          label: 'Air Flow (m/s)',
+          data: this.rollingPlotData,
+          fill: false,
+          borderColor: 'rgb(73, 138, 255)',
+          tension: 0.1
+        }]}
+      }))
+    })
+
+    this.LiveDataCollection()
   }
 
   async pair(){
@@ -216,7 +332,17 @@ export class ConnectPage implements OnInit {
     this.numMinutesOnDisk = null
     this.numSessionsOnDisk = null
     this.DownloadLocal = false
+    this.isModeSelected = false
+    this.LoadLiveData = false
     this.taskQueue = []
+    this.lineChart = []
+    this.Livesession = null
+    this.UserStop = false
+    this.LiveStream = null
+    this.rollingPlotData = []
+    this.subPacketsRecieved = 0;
+    this.packetData = []
+    this.packetTempData  = []
   }
 
 }

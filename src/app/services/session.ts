@@ -18,7 +18,13 @@ export interface RawDataPacket {
 
 export interface BreathingRateSession {
     sessionID: number,
-    localOutliers: number[]
+    localOutliers: number[],
+    localShocks: number[],
     data: number[]
     id?: string
+}
+
+export interface Event {
+    eventType: string,
+    timeStamp: number
 }

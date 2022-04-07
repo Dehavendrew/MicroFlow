@@ -6,7 +6,7 @@ import { AuthService } from '../services/auth.service';
 import { AngularFireAuth, PERSISTENCE } from '@angular/fire/compat/auth';
 import { Observable } from 'rxjs';
 import { User } from '../services/user';
-import { Session } from '../services/session';
+import { Session, Event } from '../services/session';
 import { AngularFirestore, AngularFirestoreDocument } from '@angular/fire/compat/firestore';
 import { docData, doc, Firestore } from '@angular/fire/firestore';
 import { Chart, registerables, TooltipLabelStyle } from 'chart.js';
@@ -27,8 +27,9 @@ export class HomePage {
   userSub: any;
 
   modeSelected: string[] = [];
-  eventsPerSession: object[][] = [];
-  eventsDroppedDown:boolean[] = []
+  eventsPerSession: Event[][] = [];
+  eventsDroppedDown:boolean[] = [];
+  incrementSizes: number[] = [];
 
 
   @ViewChildren("charts") lineCanvas: any;
@@ -46,10 +47,12 @@ export class HomePage {
     this.lineChart = []
     this.eventsPerSession = []
     this.eventsDroppedDown = []
+    this.incrementSizes = []
     this.lineCanvas.toArray().forEach((el,idx) => {
       this.modeSelected.push("airflow")
       this.eventsDroppedDown.push(false)
       this.eventsPerSession.push([])
+      this.incrementSizes.push(0.1)
       this.loadEvents(idx)
       let sessData = this.sessions[idx].data
       let labels = this.sessions[idx].indexes
@@ -60,6 +63,11 @@ export class HomePage {
       }
       this.lineChart.push(new Chart(el.nativeElement, {
         type:"line",
+        options:{
+          animation:{
+            duration: 0.5
+          }
+        },
         data: {
           labels: labels,
           datasets: [{
@@ -99,6 +107,7 @@ export class HomePage {
       this.modeSelected = []
       this.eventsPerSession = []
       this.eventsDroppedDown = []
+      this.incrementSizes = []
       this.sessions = res;
       this.cd.detectChanges()
       this.LoadGraphs();
@@ -256,7 +265,7 @@ export class HomePage {
 
         for(let i = 0; i < 20; ++i){
           sumarizedData.push(selectedData[i *Math.floor(selectedData.length / 20)])
-          sumarizedIndexes.push(selectedIndexes[i *Math.floor(selectedData.length / 20)])
+          sumarizedIndexes.push(Math.round(selectedIndexes[i *Math.floor(selectedData.length / 20)]))
         }
         selectedData = sumarizedData
         selectedIndexes = sumarizedIndexes
@@ -275,53 +284,70 @@ export class HomePage {
       this.nobList.toArray()[id].color = 'yellow' 
     }
   }
-
   updateEvents(events, idx){
+    const sorter = (a, b) => {
+      return a.timeStamp < b.timeStamp ? -1 : 1
+    }
+
     this.eventsPerSession[idx] = []
     if(events){
       events.localOutliers.forEach(val => {
-        this.eventsPerSession[idx].push({"eventType":"Local Spike","timeStamp":Math.round(val / 10 * 100) / 10})
+        this.eventsPerSession[idx].push({eventType:"Local Extreme",timeStamp:Math.round(val / 10 * 100) / 10})
       })
+      events.localShocks.forEach(val => {
+        this.eventsPerSession[idx].push({eventType:"Local Shock",timeStamp:Math.round(val / 10 * 100) / 10})
+      })
+    }
+
+    this.eventsPerSession[idx] = this.eventsPerSession[idx].sort(sorter)
+  }
+
+  changeIncrement(idx){
+    if(this.incrementSizes[idx] == 1000){
+      this.incrementSizes[idx] = 0.1
+    }
+    else{
+      this.incrementSizes[idx]= this.incrementSizes[idx] * 10
     }
   }
 
   plotAnomaly(time, idx){
-    this.nobList.toArray()[idx].value = {"lower":time-1,"upper":time+1}
+    this.nobList.toArray()[idx].value = {"lower":time-1,"upper":time+1} 
   }
 
   plotNudgeLeft(idx){
-    if(this.nobList.toArray()[idx].value.lower && this.nobList.toArray()[idx].value.lower > 0){
-      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower-0.1,"upper":this.nobList.toArray()[idx].value.upper - 0.1}
+    if(this.nobList.toArray()[idx].value.lower && this.nobList.toArray()[idx].value.lower > 0 + this.incrementSizes[idx]){
+      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower-this.incrementSizes[idx],"upper":this.nobList.toArray()[idx].value.upper - this.incrementSizes[idx]}
     }
   }
 
   plotNudgeRight(idx){
-    if(this.nobList.toArray()[idx].value.upper && this.nobList.toArray()[idx].value.upper < this.sessions[idx].numSamples){
-      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower+0.1,"upper":this.nobList.toArray()[idx].value.upper + 0.1}
+    if(this.nobList.toArray()[idx].value.upper && this.nobList.toArray()[idx].value.upper < this.sessions[idx].numSamples - this.incrementSizes[idx]){
+      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower+this.incrementSizes[idx],"upper":this.nobList.toArray()[idx].value.upper + this.incrementSizes[idx]}
     }
   }
 
   plotLeftNudgeLeft(idx){
-    if(this.nobList.toArray()[idx].value.lower && this.nobList.toArray()[idx].value.lower > 0){
-      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower-0.1,"upper":this.nobList.toArray()[idx].value.upper}
+    if(this.nobList.toArray()[idx].value.lower && this.nobList.toArray()[idx].value.lower > 0 + this.incrementSizes[idx]){
+      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower-this.incrementSizes[idx],"upper":this.nobList.toArray()[idx].value.upper}
     }
   }
 
   plotRightNudgeRight(idx){
-    if(this.nobList.toArray()[idx].value.upper && this.nobList.toArray()[idx].value.upper < this.sessions[idx].numSamples){
-      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower,"upper":this.nobList.toArray()[idx].value.upper + 0.1}
+    if(this.nobList.toArray()[idx].value.upper && this.nobList.toArray()[idx].value.upper < this.sessions[idx].numSamples - this.incrementSizes[idx]){
+      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower,"upper":this.nobList.toArray()[idx].value.upper + this.incrementSizes[idx]}
     }
   }
 
   plotLeftNudgeRight(idx){
-    if(this.nobList.toArray()[idx].value.lower && this.nobList.toArray()[idx].value.lower > 0){
-      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower + 0.1,"upper":this.nobList.toArray()[idx].value.upper}
+    if(this.nobList.toArray()[idx].value.lower && this.nobList.toArray()[idx].value.lower > 0 + this.incrementSizes[idx]){
+      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower + this.incrementSizes[idx],"upper":this.nobList.toArray()[idx].value.upper}
     }
   }
 
   plotRightNudgeLeft(idx){
-    if(this.nobList.toArray()[idx].value.upper && this.nobList.toArray()[idx].value.upper < this.sessions[idx].numSamples){
-      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower,"upper":this.nobList.toArray()[idx].value.upper - 0.1}
+    if(this.nobList.toArray()[idx].value.upper && this.nobList.toArray()[idx].value.upper < this.sessions[idx].numSamples - this.incrementSizes[idx]){
+      this.nobList.toArray()[idx].value = {"lower":this.nobList.toArray()[idx].value.lower,"upper":this.nobList.toArray()[idx].value.upper - this.incrementSizes[idx]}
     }
   }
 
