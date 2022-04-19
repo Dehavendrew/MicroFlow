@@ -110,7 +110,7 @@ export class ConnectPage implements OnInit {
       for (let j = 0; j < 5; j++){
         var currentTime = new Date()
         var sess_id = Math.floor(Math.random() * 1000000000)
-        var NumsamplesTest = Math.floor(Math.random() * 1000)
+        var NumsamplesTest = Math.floor(Math.random() * 10000)
         this.sessions.push({uid: this.user.uid, date: currentTime, data: null, sessionID:sess_id, numSamples: NumsamplesTest })
         Numsamples = Numsamples + NumsamplesTest
       }
@@ -159,34 +159,63 @@ export class ConnectPage implements OnInit {
   }
 
   async localWrite(i){
+    if(await this.checkTaskInQueue(i)){
+      return
+    }
+    
     this.isImporting = true
-    let msg = "Writing Session " + i + " To Local"
+    let msg = "Writing Session " + i + " To Disk"
     console.log(msg)
-    console.log(Directory.Documents)
 
-    if (this.platForm == "web") {
-
-      const rows = [
-        ["name1", "city1", "some other info"],
-        ["name2", "city2", "more info"]
-      ];
-        
-      let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
-      const data: string =  encodeURI(csvContent);
-      const link: HTMLElement = document.createElement('a');
-      link.setAttribute('href', data);
-      link.setAttribute('download', "test.txt");
-      link.click();
-      return;
+    let sess = null
+    for (let idx = 0; idx < this.sessions.length; idx++){
+      if(this.sessions[idx].sessionID == i){
+        sess = this.sessions[idx]
+      }
     }
-    else{
-      const fileName = 'text.txt'
-      const savedFile = await Filesystem.writeFile({
-      path:fileName,
-      data: "This is a test file",
-      directory: FilesystemDirectory.Documents
+
+    this.taskQueue.push({session: sess, id: i, task: "Disk Write ", completed: false})
+
+    this.bleService.requestDataStream(sess,true).then((res) => {
+      this.dataService.addLocalSession(res, this.platForm).then(res => {
+        for (let task of this.taskQueue) {
+          if(task.id == i){
+            task.completed = true
+            console.log("Done")
+          }
+        }
+        for (let idx = 0; idx < this.sessions.length; idx++){
+          if(this.sessions[idx].sessionID == i){
+            this.sessions.splice(idx, 1);
+          }
+        }
+        this.updateStats()
+      })
     })
-    }
+
+    // if (this.platForm == "web") {
+
+    //   const rows = [
+    //     ["name1", "city1", "some other info"],
+    //     ["name2", "city2", "more info"]
+    //   ];
+        
+    //   let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+    //   const data: string =  encodeURI(csvContent);
+    //   const link: HTMLElement = document.createElement('a');
+    //   link.setAttribute('href', data);
+    //   link.setAttribute('download', "test.txt");
+    //   link.click();
+    //   return;
+    // }
+    // else{
+    //   const fileName = 'text.txt'
+    //   const savedFile = await Filesystem.writeFile({
+    //   path:fileName,
+    //   data: "This is a test file",
+    //   directory: FilesystemDirectory.Documents
+    //   })
+    // }
   }
 
   

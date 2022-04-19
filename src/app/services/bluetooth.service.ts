@@ -166,7 +166,11 @@ export class BluetoothService {
     var tempsummaryArray: number[] = []
     var indexArray: number[] = []
 
+    var fullDataArray: number[] = []
+    var fullTempArray: number[] = []
+
     const average = (array) => array.reduce((a, b) => a + b) / array.length;
+
 
     for(let i = 0; i < numPackets; i++){
       msg = "Requesting Packet " + i
@@ -194,16 +198,32 @@ export class BluetoothService {
             this.currentLoadPercent = recievedPackets / numPackets
           })
         }
+        else{
+          fullDataArray = fullDataArray.concat(res.slice(0,125))
+          fullTempArray = fullTempArray.concat(res.slice(125,250))
+          recievedPackets++
+          this.currentLoadPercent = recievedPackets / numPackets
+        }
       }).catch(err => i = i - 1)
       await this.ackFromCentral(i).then((res) => {console.log("Done acking")})
     }
 
-    return new Promise(resolve => {
-      sess.data = summaryArray
-      sess.indexes = indexArray
-      sess.tempdata = tempsummaryArray
-      resolve(sess)
-    })
+    if(writeLocal){
+      return new Promise(resolve => {
+        sess.data = fullDataArray
+        sess.indexes = indexArray
+        sess.tempdata = fullTempArray
+        resolve(sess)
+      })
+    }
+    else{
+      return new Promise(resolve => {
+        sess.data = summaryArray
+        sess.indexes = indexArray
+        sess.tempdata = tempsummaryArray
+        resolve(sess)
+      })
+    }
   }
 
 

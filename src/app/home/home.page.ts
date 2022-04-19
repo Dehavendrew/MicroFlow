@@ -12,6 +12,7 @@ import { docData, doc, Firestore } from '@angular/fire/firestore';
 import { Chart, registerables, TooltipLabelStyle } from 'chart.js';
 import { MLService } from '../services/ml.service';
 import { ToastController } from '@ionic/angular';
+import {Platform} from '@ionic/angular';
 
 @Component({
   selector: 'app-home',
@@ -31,15 +32,28 @@ export class HomePage {
   eventsDroppedDown:boolean[] = [];
   incrementSizes: number[] = [];
 
+  platForm: string;
+
 
   @ViewChildren("charts") lineCanvas: any;
   @ViewChildren("nobs") nobList: any;
   private lineChart: Chart[] = [];
 
 
-  constructor(private toastCtrl: ToastController, private mlService: MLService, private firestore: Firestore, public afs: AngularFirestore, private dataService: DataService, private cd: ChangeDetectorRef, private alertCtrl: AlertController, private modalCtrl: ModalController,  public afAuth: AngularFireAuth, public authService: AuthService) {
+  constructor(private platform: Platform, private toastCtrl: ToastController, private mlService: MLService, private firestore: Firestore, public afs: AngularFirestore, private dataService: DataService, private cd: ChangeDetectorRef, private alertCtrl: AlertController, private modalCtrl: ModalController,  public afAuth: AngularFireAuth, public authService: AuthService) {
     this.authStatusListener()  
     Chart.register(...registerables);
+
+    platform.ready().then(() => {
+
+      console.log(this.platform.is)
+
+      if (this.platform.is('mobileweb')) {
+          console.log("running in a browser on mobile!");
+          this.platForm = "web"
+      }
+
+    });
   }
 
   LoadGraphs(){ 
@@ -484,6 +498,7 @@ export class HomePage {
   localWrite(idx){
     let msg = "Local Write " + idx
     console.log(msg)
+    this.dataService.saveToDisk(this.sessions[idx], this.platForm)
   }
 
 }

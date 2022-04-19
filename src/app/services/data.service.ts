@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Firestore, collection, collectionData, doc, docData, addDoc, deleteDoc, updateDoc, query, where, orderBy } from '@angular/fire/firestore';
+import { endAt } from 'firebase/firestore';
 import { Observable } from 'rxjs';
 import { Session, RawDataPacket, BreathingRateSession } from './session';
 
@@ -49,6 +50,12 @@ export class DataService {
     return collectionData(packetSessRef, { idField: 'id'}) as Observable<RawDataPacket[]>;
   }
 
+  getPacketsForSessionPromise(id):Promise<RawDataPacket[]>{
+    const packetRef = collection(this.firestore, 'packets');
+    const packetSessRef = query(packetRef, where("sessionID", "==", id), orderBy("idx"));
+    return collectionData(packetSessRef, { idField: 'id'}).toPromise() as Promise<RawDataPacket[]>;
+  }
+
   addNote(note: Note){
     const notesRef = collection(this.firestore, 'notes');
     return addDoc(notesRef, note);
@@ -92,6 +99,89 @@ export class DataService {
   updateNote(note: Note){
     const noteDocRef = doc(this.firestore, `notes`);
     return updateDoc(noteDocRef, {title: note.title, text: note.text});
+  }
+
+  async addLocalSession(session: Session, device: String){
+    let maxFileSize = 1000000
+    let fileName = "Session_" + session.sessionID
+    let date = new Date(session.date)
+
+    let data = session.data
+    let tempdata = session.tempdata
+
+    for(let i = 0; i < Math.ceil(data.length / maxFileSize); ++i){
+      fileName = fileName + "_" + i + ".csv"
+      let DataArray = [];
+      let start = i * maxFileSize
+      let end = i * maxFileSize + maxFileSize
+
+      if(end > data.length){
+        end = data.length
+      }
+
+
+      for(let idx = start; idx < end; ++idx){
+        date = new Date(date.setMilliseconds(date.getMilliseconds() + 100))
+        DataArray.push([date.toISOString(),data[idx], tempdata[idx]])
+      }
+
+      if (device == "web") {
+        let csvContent = "data:text/csv;charset=utf-8," + DataArray.map(e => e.join(",")).join("\n");
+        const data: string =  encodeURI(csvContent);
+        const link: HTMLElement = document.createElement('a');
+        link.setAttribute('href', data);
+        link.setAttribute('download', fileName);
+        link.click();
+        return;
+      }
+    }
+
+  }
+
+  async saveToDisk(session: Session, device: String){
+    let numPackets = 0;
+    let data = [];
+    let tempdata = [];
+    let maxFileSize = 1000000
+    let fileName = "Session_" + session.sessionID
+    let date = session.date.toDate()
+    await this.getPacketsForSession(session.sessionID).subscribe((res) => {
+      if(res.length > numPackets){
+        numPackets = res.length
+        res.forEach(el => {
+          data = data.concat(el.data.slice(0,125))
+          tempdata = tempdata.concat(el.data.slice(125,250))
+        })
+
+
+        for(let i = 0; i < Math.ceil(data.length / maxFileSize); ++i){
+          fileName = fileName + "_" + i + ".csv"
+          let DataArray = [];
+          let start = i * maxFileSize
+          let end = i * maxFileSize + maxFileSize
+
+          if(end > data.length){
+            end = data.length
+          }
+
+
+          for(let idx = start; idx < end; ++idx){
+            date = new Date(date.setMilliseconds(date.getMilliseconds() + 100))
+            DataArray.push([date.toISOString(),data[idx], tempdata[idx]])
+          }
+
+          if (device == "web") {
+            let csvContent = "data:text/csv;charset=utf-8," + DataArray.map(e => e.join(",")).join("\n");
+            const data: string =  encodeURI(csvContent);
+            const link: HTMLElement = document.createElement('a');
+            link.setAttribute('href', data);
+            link.setAttribute('download', fileName);
+            link.click();
+            return;
+          }
+        }
+      }
+    })
   }
 
 }
