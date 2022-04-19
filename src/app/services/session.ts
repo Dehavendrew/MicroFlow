@@ -1,6 +1,6 @@
 export interface Session {
     uid: string,
-    date: Date,
+    date: any,
     data: number[]
     tempdata?: number[]
     indexes?: number[]

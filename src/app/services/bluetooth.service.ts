@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Session } from './session';
 import { DataService } from './data.service';
 import { Observable } from 'rxjs';
+import { BleClient } from '@capacitor-community/bluetooth-le';
 
 @Injectable({
   providedIn: 'root'
@@ -35,6 +36,28 @@ export class BluetoothService {
       res(dataArray)
     })
 
+  }
+
+  async connectBLE(){
+    const HEART_RATE_SERVICE = '0000180d-0000-1000-8000-00805f9b34fb';
+    const HEART_RATE_MEASUREMENT_CHARACTERISTIC = '00002a37-0000-1000-8000-00805f9b34fb';
+    const BODY_SENSOR_LOCATION_CHARACTERISTIC = '00002a38-0000-1000-8000-00805f9b34fb';
+    const POLAR_PMD_SERVICE = 'fb005c80-02e7-f387-1cad-8acd2d8df0c8';
+    const POLAR_PMD_CONTROL_POINT = 'fb005c81-02e7-f387-1cad-8acd2d8df0c8'
+
+    await BleClient.initialize();
+    console.log("Bluetoot Initalized")
+    const device = await BleClient.requestDevice({
+      services: [HEART_RATE_SERVICE],
+    });
+
+    // connect to device, the onDisconnect callback is optional
+    await BleClient.connect(device.deviceId, (deviceId) => this.onDisconnect(deviceId));
+    console.log('connected to device', device);
+  }
+
+  onDisconnect(deviceId: string): void {
+    console.log(`device ${deviceId} disconnected`);
   }
 
   async sendPacketTest(i): Promise<number[]>{

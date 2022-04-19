@@ -1,5 +1,5 @@
 import { Component, OnInit, NgZone  } from '@angular/core';
-import { AuthService } from 'src/app/services/auth.service';
+import { AuthService } from '../../services/auth.service';
 import { AngularFireAuth, PERSISTENCE } from '@angular/fire/compat/auth';
 import { Router } from '@angular/router';
 

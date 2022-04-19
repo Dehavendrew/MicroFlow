@@ -8,6 +8,8 @@ import { User } from '../services/user';
 import { Observable } from 'rxjs';
 import { BluetoothService } from '../services/bluetooth.service';
 import { Chart, registerables, TooltipLabelStyle } from 'chart.js';
+import { Filesystem, Directory, Encoding, FilesystemDirectory, } from '@capacitor/filesystem';
+import {Platform} from '@ionic/angular';
 
 export interface Task {
   session: Session,
@@ -48,15 +50,28 @@ export class ConnectPage implements OnInit {
 
   taskQueue: Task[] = []
 
+  platForm: string;
+
   user: User
 
   @ViewChildren("charts") lineCanvas: any;
   private lineChart: Chart[] = [];
 
-  constructor(private toastCtrl: ToastController, private dataService: DataService, public afAuth: AngularFireAuth, public authService: AuthService, private bleService: BluetoothService) {
+  constructor(private platform: Platform, private toastCtrl: ToastController, public dataService: DataService, public afAuth: AngularFireAuth, public authService: AuthService, public bleService: BluetoothService) {
     this.resetPairing()
     this.authStatusListener()
     Chart.register(...registerables);
+
+    platform.ready().then(() => {
+
+        console.log(this.platform.is)
+
+        if (this.platform.is('mobileweb')) {
+            console.log("running in a browser on mobile!");
+            this.platForm = "web"
+        }
+
+    });
    }
 
   ngOnInit() {
@@ -147,7 +162,34 @@ export class ConnectPage implements OnInit {
     this.isImporting = true
     let msg = "Writing Session " + i + " To Local"
     console.log(msg)
+    console.log(Directory.Documents)
+
+    if (this.platForm == "web") {
+
+      const rows = [
+        ["name1", "city1", "some other info"],
+        ["name2", "city2", "more info"]
+      ];
+        
+      let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+      const data: string =  encodeURI(csvContent);
+      const link: HTMLElement = document.createElement('a');
+      link.setAttribute('href', data);
+      link.setAttribute('download', "test.txt");
+      link.click();
+      return;
+    }
+    else{
+      const fileName = 'text.txt'
+      const savedFile = await Filesystem.writeFile({
+      path:fileName,
+      data: "This is a test file",
+      directory: FilesystemDirectory.Documents
+    })
+    }
   }
+
+  
 
   async delete(i){
     if(await this.checkTaskInQueue(i)){
@@ -248,7 +290,7 @@ export class ConnectPage implements OnInit {
     return new Promise( resolve => {
       setTimeout(resolve => {
         this.LiveDataCollection()
-      }, 2500)
+      }, 500)
     })
   }
 
@@ -257,6 +299,16 @@ export class ConnectPage implements OnInit {
     let indexes = []
     let tempData = []
     let data = []
+    if(this.subPacketsRecieved != 5){
+      this.subPacketsRecieved = 0
+      while(this.packetData.length < 125){
+        this.packetData.push(0)
+        this.packetTempData.push(0)
+      }
+      await this.dataService.addRawPacket({sessionID: this.Livesession.sessionID, idx: Math.floor(this.Livesession.numSamples / 150), data: this.packetData.concat(this.packetTempData)})
+      this.packetData = []
+      this.packetTempData = []
+    }
     for(let i = 0; i < 20; ++i){
       indexes.push(Math.round(Math.floor(i * (this.Livesession.numSamples) / 20)))
     }
@@ -310,6 +362,8 @@ export class ConnectPage implements OnInit {
 
   async pair(){
     this.resetPairing()
+
+    //this.bleService.connectBLE()
 
     console.log("Begining Pairing")
     await this.searchForDevice()
