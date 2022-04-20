@@ -7,7 +7,8 @@
 <ion-content>
   <ion-grid>
     <ion-row class="row_center">
-      <ion-button (click)="pair()">Pair</ion-button>
+      <ion-button (click)="pair()">  Pair  </ion-button>
+      <ion-button (click)="refresh()">Refresh</ion-button>
     </ion-row>
 
     <ion-row class="row_center" [ngStyle]="{'visibility':isLoading ? 'visible' : 'hidden'}">
@@ -74,25 +75,6 @@
       </ion-col>
     </ion-row>
 
-    <ion-col class="livePlotArea">
-    </ion-col>
-    <ion-row *ngIf="LoadLiveData">  
-      <ion-col class="row_center" class="results">
-        <ion-button (click)="stopOnline()">Stop Collection</ion-button>
-      </ion-col>
-    </ion-row>
-    <ion-row *ngIf="LoadLiveData">
-      <ion-col class="row_center" class="results">
-        Session: {{ Livesession.sessionID }} <br>
-        Date: {{ Livesession.date | date:'medium' }} <br>
-        Duration: {{ Livesession.numSamples / 10 }} seconds <br>
-        Size: {{ Livesession.numSamples * bleService.numMetrics / 1000 }} kB
-      </ion-col>
-    </ion-row> 
-
-
-    <canvas id="liveCanvas" #charts></canvas>
-
     <ion-grid *ngIf="DownloadLocal">
       <ion-row class="row_center" [ngStyle]="{'visibility':DownloadLocal && isQueried ? 'visible' : 'hidden'}" *ngFor="let session of sessions; let i = index">
         <ion-col class="row_center" class="results">
@@ -136,6 +118,23 @@
         Data Saved!
       </ion-col>
     </ion-row>
+
+    <ion-row *ngIf="LoadLiveData">  
+      <ion-col class="row_center" class="results">
+        <ion-button *ngIf="!LiveStopped" (click)="stopOnline()">Stop Collection</ion-button>
+      </ion-col>
+    </ion-row>
+    <ion-row *ngIf="LoadLiveData">
+      <ion-col class="row_center" class="results">
+        Session: {{ Livesession.sessionID }} <br>
+        Date: {{ Livesession.date | date:'medium' }} <br>
+        Duration: {{ Livesession.numSamples / 10 }} seconds <br>
+        Size: {{ Livesession.numSamples * bleService.numMetrics / 1000 }} kB
+      </ion-col>
+    </ion-row> 
+
+
+    <canvas id="liveCanvas" #charts></canvas>
 
   </ion-grid>
 </ion-content>

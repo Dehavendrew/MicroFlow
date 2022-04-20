@@ -3,6 +3,8 @@ import { Firestore, collection, collectionData, doc, docData, addDoc, deleteDoc,
 import { endAt } from 'firebase/firestore';
 import { Observable } from 'rxjs';
 import { Session, RawDataPacket, BreathingRateSession } from './session';
+import { Filesystem, Directory, Encoding, FilesystemDirectory, } from '@capacitor/filesystem';
+import { ToastController } from '@ionic/angular';
 
 
 export interface Note{
@@ -19,7 +21,7 @@ export class DataService {
 
   uid: string
 
-  constructor(private firestore: Firestore) { }
+  constructor(private toastCtrl: ToastController, private firestore: Firestore) { }
 
   getNotes(uid): Observable<Note[]>{
     const notesRef = collection(this.firestore, 'notes');
@@ -103,14 +105,20 @@ export class DataService {
 
   async addLocalSession(session: Session, device: String){
     let maxFileSize = 1000000
-    let fileName = "Session_" + session.sessionID
+    let fileName1 = "Session_" + session.sessionID
     let date = new Date(session.date)
 
     let data = session.data
     let tempdata = session.tempdata
 
+    let toast = this.toastCtrl.create({
+      message: 'Data Saved Succesfully',
+      duration: 3000,
+      position: 'bottom'
+    });
+
     for(let i = 0; i < Math.ceil(data.length / maxFileSize); ++i){
-      fileName = fileName + "_" + i + ".csv"
+      fileName1 = fileName1 + "_" + i + ".csv"
       let DataArray = [];
       let start = i * maxFileSize
       let end = i * maxFileSize + maxFileSize
@@ -125,14 +133,30 @@ export class DataService {
         DataArray.push([date.toISOString(),data[idx], tempdata[idx]])
       }
 
+      let csvContent =  DataArray.map(e => e.join(",")).join("\n");
       if (device == "web") {
-        let csvContent = "data:text/csv;charset=utf-8," + DataArray.map(e => e.join(",")).join("\n");
-        const data: string =  encodeURI(csvContent);
+        const data: string =  encodeURI("data:text/csv;charset=utf-8," + csvContent);
         const link: HTMLElement = document.createElement('a');
         link.setAttribute('href', data);
-        link.setAttribute('download', fileName);
+        link.setAttribute('download', fileName1);
         link.click();
+        toast.then((res) => {
+          res.present()
+        })
         return;
+      }
+      else{
+        const fileName = fileName1
+          Filesystem.writeFile({
+          encoding: Encoding.UTF8,
+          path:fileName,
+          data: csvContent,
+          directory: FilesystemDirectory.Documents
+        }).then(() => {
+          toast.then((res) => {
+            res.present()
+          })
+        })
       }
     }
 
@@ -143,8 +167,15 @@ export class DataService {
     let data = [];
     let tempdata = [];
     let maxFileSize = 1000000
-    let fileName = "Session_" + session.sessionID
+    let fileName1 = "Session_" + session.sessionID
     let date = session.date.toDate()
+
+    let toast = this.toastCtrl.create({
+      message: 'Data Saved Succesfully',
+      duration: 3000,
+      position: 'bottom'
+    });
+
     await this.getPacketsForSession(session.sessionID).subscribe((res) => {
       if(res.length > numPackets){
         numPackets = res.length
@@ -155,7 +186,7 @@ export class DataService {
 
 
         for(let i = 0; i < Math.ceil(data.length / maxFileSize); ++i){
-          fileName = fileName + "_" + i + ".csv"
+          fileName1 = fileName1 + "_" + i + ".csv"
           let DataArray = [];
           let start = i * maxFileSize
           let end = i * maxFileSize + maxFileSize
@@ -170,14 +201,31 @@ export class DataService {
             DataArray.push([date.toISOString(),data[idx], tempdata[idx]])
           }
 
+          let csvContent = DataArray.map(e => e.join(",")).join("\n");
           if (device == "web") {
-            let csvContent = "data:text/csv;charset=utf-8," + DataArray.map(e => e.join(",")).join("\n");
-            const data: string =  encodeURI(csvContent);
+            const data: string =  encodeURI("data:text/csv;charset=utf-8," + csvContent);
             const link: HTMLElement = document.createElement('a');
             link.setAttribute('href', data);
-            link.setAttribute('download', fileName);
+            link.setAttribute('download', fileName1);
             link.click();
+            toast.then((res) => {
+              res.present()
+            })
             return;
+          }
+          else{
+            const fileName = fileName1
+              Filesystem.writeFile({
+              encoding: Encoding.UTF8,
+              path:fileName,
+              data: csvContent,
+              directory: FilesystemDirectory.Documents
+              
+            }).then(() => {
+              toast.then((res) => {
+                res.present()
+              })
+            })
           }
         }
       }

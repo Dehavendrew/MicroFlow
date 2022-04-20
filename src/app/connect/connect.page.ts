@@ -42,6 +42,8 @@ export class ConnectPage implements OnInit {
   sessions: Session[] = [];
   Livesession: Session;
 
+  LiveStopped: boolean;
+
   LiveStream: any;
   rollingPlotData: number[] = []
   subPacketsRecieved: number = 0;
@@ -110,7 +112,7 @@ export class ConnectPage implements OnInit {
       for (let j = 0; j < 5; j++){
         var currentTime = new Date()
         var sess_id = Math.floor(Math.random() * 1000000000)
-        var NumsamplesTest = Math.floor(Math.random() * 10000)
+        var NumsamplesTest = Math.floor(Math.random() * 1000)
         this.sessions.push({uid: this.user.uid, date: currentTime, data: null, sessionID:sess_id, numSamples: NumsamplesTest })
         Numsamples = Numsamples + NumsamplesTest
       }
@@ -119,6 +121,10 @@ export class ConnectPage implements OnInit {
       this.numMinutesOnDisk = Numsamples / 10
 
     });
+  }
+
+  refresh(){
+    window.location.reload();
   }
 
   async cloudWrite(i){
@@ -351,7 +357,10 @@ export class ConnectPage implements OnInit {
       this.Livesession.data = data
       this.Livesession.indexes = indexes
       this.dataService.addSession(this.Livesession)
-    })
+      this.LiveStopped = true;
+    },
+    (err) => {console.log("There was an error")});
+    
   }
 
   startOnline(){
@@ -392,7 +401,7 @@ export class ConnectPage implements OnInit {
   async pair(){
     this.resetPairing()
 
-    //this.bleService.connectBLE()
+    await this.bleService.connectBLE()
 
     console.log("Begining Pairing")
     await this.searchForDevice()
@@ -426,6 +435,7 @@ export class ConnectPage implements OnInit {
     this.subPacketsRecieved = 0;
     this.packetData = []
     this.packetTempData  = []
+
   }
 
 }

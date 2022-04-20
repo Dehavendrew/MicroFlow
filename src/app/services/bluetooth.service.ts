@@ -3,6 +3,7 @@ import { Session } from './session';
 import { DataService } from './data.service';
 import { Observable } from 'rxjs';
 import { BleClient } from '@capacitor-community/bluetooth-le';
+import { ToastController } from '@ionic/angular';
 
 @Injectable({
   providedIn: 'root'
@@ -21,7 +22,7 @@ export class BluetoothService {
   sentAckedPackets: Number [] = [] 
   
 
-  constructor(private dataService: DataService) { } 
+  constructor(private toastCtrl: ToastController, private dataService: DataService) { } 
 
   async requestLivePacket(): Promise<number[]>{
     var dataArray: number[] = []
@@ -45,15 +46,27 @@ export class BluetoothService {
     const POLAR_PMD_SERVICE = 'fb005c80-02e7-f387-1cad-8acd2d8df0c8';
     const POLAR_PMD_CONTROL_POINT = 'fb005c81-02e7-f387-1cad-8acd2d8df0c8'
 
-    await BleClient.initialize();
-    console.log("Bluetoot Initalized")
-    const device = await BleClient.requestDevice({
-      services: [HEART_RATE_SERVICE],
+    const BAND_SERVICE = '19B10000-E8F2-537E-4F6C-D104768A1214';
+
+    let toast = this.toastCtrl.create({
+      message: 'Connected To MicroFlow Device',
+      duration: 3000,
+      position: 'bottom'
     });
 
-    // connect to device, the onDisconnect callback is optional
-    await BleClient.connect(device.deviceId, (deviceId) => this.onDisconnect(deviceId));
-    console.log('connected to device', device);
+    await BleClient.initialize();
+    console.log("Bluetoot Initalized")
+    BleClient.requestDevice({
+      services: [BAND_SERVICE.toLowerCase()],
+    }).then((device) => {
+      BleClient.connect(device.deviceId, (deviceId) => this.onDisconnect(deviceId));
+      console.log('connected to device', device);
+      toast.then((res) => {
+        res.present()
+      })
+    }).catch(() => {
+      console.log("No Device Found")
+    });
   }
 
   onDisconnect(deviceId: string): void {

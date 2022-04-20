@@ -19,8 +19,8 @@ export class MLService {
       var breathingRate: number[] = []
       var localOutlierIdx: number[] = []
       var localShockIdx: number[] = []
-      // var globalOutlierIdx: number[] = []
-      // var globalShockIdx: number[] = []
+      //var globalOutlierIdx: number[] = []
+      //var globalShockIdx: number[] = []
 
   
       //Hanning Windows 
