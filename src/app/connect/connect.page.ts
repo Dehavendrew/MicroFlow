@@ -49,6 +49,7 @@ export class ConnectPage implements OnInit {
   subPacketsRecieved: number = 0;
   packetData: number[] = []
   packetTempData: number[] = []
+  subPacketQueue: number[] = []
 
   taskQueue: Task[] = []
 
@@ -285,43 +286,41 @@ export class ConnectPage implements OnInit {
     this.DownloadLocal = true
   }
 
-  addPacket(){
-    this.bleService.requestLivePacket().then(res => {
-      this.subPacketsRecieved = this.subPacketsRecieved + 1
-      this.packetData = this.packetData.concat(res.slice(0,25))
-      this.packetTempData = this.packetTempData.concat(res.slice(25,50))
+  addPacket(res){
+    this.subPacketsRecieved = this.subPacketsRecieved + 1
+    this.packetData = this.packetData.concat(res.slice(0,1))
+    this.packetTempData = this.packetTempData.concat(res.slice(1,2))
 
-      if(this.subPacketsRecieved == 5){
-        this.subPacketsRecieved = 0
-        this.dataService.addRawPacket({sessionID: this.Livesession.sessionID, idx: Math.floor(this.Livesession.numSamples / 150), data: this.packetData.concat(this.packetTempData)})
-        this.packetData = []
-        this.packetTempData = []
-      }
+    if(this.subPacketsRecieved == 125){
+      this.subPacketsRecieved = 0
+      this.dataService.addRawPacket({sessionID: this.Livesession.sessionID, idx: Math.floor(this.Livesession.numSamples / 125), data: this.packetData.concat(this.packetTempData)})
+      this.packetData = []
+      this.packetTempData = []
+    }
 
-      let labels = Array.from(Array(25).keys())
-      this.rollingPlotData.shift()
-      this.rollingPlotData.push(res[0])
-      let sessData = this.rollingPlotData
+    let labels = Array.from(Array(25).keys())
+    this.rollingPlotData.shift()
+    this.rollingPlotData.push(res[0])
+    let sessData = this.rollingPlotData
 
-      this.lineChart[0].data.labels = labels
-      this.lineChart[0].data.datasets = [{
-            label: 'Air Flow (m/s)',
-            data: sessData,
-            fill: false,
-            borderColor: 'rgb(73, 138, 255)',
-            tension: 0.1
-      }]
-        
-      this.lineChart[0].update()
-      this.Livesession.numSamples = this.Livesession.numSamples + 25
-    })
+    this.lineChart[0].data.labels = labels
+    this.lineChart[0].data.datasets = [{
+          label: 'Air Flow (m/s)',
+          data: sessData,
+          fill: false,
+          borderColor: 'rgb(73, 138, 255)',
+          tension: 0.1
+    }]
+      
+    this.lineChart[0].update()
+    this.Livesession.numSamples = this.Livesession.numSamples + 1
   }
 
   LiveDataCollection(){
     if(this.UserStop){
       return
     }
-    this.addPacket()
+  //  this.addPacket()
     return new Promise( resolve => {
       setTimeout(resolve => {
         this.LiveDataCollection()
@@ -329,8 +328,21 @@ export class ConnectPage implements OnInit {
     })
   }
 
+  LiveDataCollectionBLE(){
+    this.bleService.startListenForPackets(this.AddPacketCallBack, this)
+  }
+
+  AddPacketCallBack(res, that){
+    that.subPacketQueue.push(res.getUint8(0));
+    if(that.subPacketQueue.length == 2){
+      that.addPacket(that.subPacketQueue)
+      that.subPacketQueue = []
+    }
+  }
+
   async stopOnline(){
     this.UserStop = true
+    this.bleService.stopListenForPackets()
     let indexes = []
     let tempData = []
     let data = []
@@ -395,7 +407,7 @@ export class ConnectPage implements OnInit {
       }))
     })
 
-    this.LiveDataCollection()
+    this.LiveDataCollectionBLE()
   }
 
   async pair(){

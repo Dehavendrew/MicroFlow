@@ -20,6 +20,10 @@ export class BluetoothService {
   testFailureRate = 0.0
   unAckedPackets: Number [] = []
   sentAckedPackets: Number [] = [] 
+
+  microFlowDevice = null
+  BAND_SERVICE = '19B10000-E8F2-537E-4F6C-D104768A1214'.toLowerCase();
+  BAND_CHAR= "19B10001-E8F2-537E-4F6C-D104768A1214".toLowerCase();
   
 
   constructor(private toastCtrl: ToastController, private dataService: DataService) { } 
@@ -33,20 +37,32 @@ export class BluetoothService {
       dataArray.push(32 + Math.random())
     }
 
+    // const result = await BleClient.read(this.microFlowDevice.deviceId, this.BAND_SERVICE, this.BAND_CHAR);
+    // console.log('Data VAlue', result.getUint8(0));
+
     return new Promise(res => {
       res(dataArray)
     })
 
   }
+  
+  async startListenForPackets(calledBack: Function, that: any){
+    await BleClient.startNotifications(
+      this.microFlowDevice.deviceId,
+      this.BAND_SERVICE,
+      this.BAND_CHAR,
+      (value) => {
+        calledBack(value, that)
+      }
+    );
+  }
+
+  async stopListenForPackets(){
+    await BleClient.stopNotifications(this.microFlowDevice.deviceId,this.BAND_SERVICE,this.BAND_CHAR,);
+    await BleClient.disconnect(this.microFlowDevice.deviceId);
+  }
 
   async connectBLE(){
-    const HEART_RATE_SERVICE = '0000180d-0000-1000-8000-00805f9b34fb';
-    const HEART_RATE_MEASUREMENT_CHARACTERISTIC = '00002a37-0000-1000-8000-00805f9b34fb';
-    const BODY_SENSOR_LOCATION_CHARACTERISTIC = '00002a38-0000-1000-8000-00805f9b34fb';
-    const POLAR_PMD_SERVICE = 'fb005c80-02e7-f387-1cad-8acd2d8df0c8';
-    const POLAR_PMD_CONTROL_POINT = 'fb005c81-02e7-f387-1cad-8acd2d8df0c8'
-
-    const BAND_SERVICE = '19B10000-E8F2-537E-4F6C-D104768A1214';
 
     let toast = this.toastCtrl.create({
       message: 'Connected To MicroFlow Device',
@@ -57,8 +73,9 @@ export class BluetoothService {
     await BleClient.initialize();
     console.log("Bluetoot Initalized")
     BleClient.requestDevice({
-      services: [BAND_SERVICE.toLowerCase()],
+      services: [this.BAND_SERVICE],
     }).then((device) => {
+      this.microFlowDevice = device
       BleClient.connect(device.deviceId, (deviceId) => this.onDisconnect(deviceId));
       console.log('connected to device', device);
       toast.then((res) => {
@@ -70,7 +87,15 @@ export class BluetoothService {
   }
 
   onDisconnect(deviceId: string): void {
+    let toast = this.toastCtrl.create({
+      message: 'Disconnected From MicroFlow Device',
+      duration: 3000,
+      position: 'bottom'
+    });
     console.log(`device ${deviceId} disconnected`);
+    toast.then((res) => {
+      res.present()
+    })
   }
 
   async sendPacketTest(i): Promise<number[]>{
