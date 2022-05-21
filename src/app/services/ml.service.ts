@@ -33,7 +33,7 @@ export class MLService {
           let packetData = tf.tensor1d(val.data.slice(0,124))
           let packetDataDer = tf.sub(packetData.slice(0,123), packetData.slice(1,123))
           
-          
+          //Calculate the immediate moments of the data, 1st and 2nd average and variance
           let packetMoments = tf.moments(packetData, 0, true) 
           let packetDerMoments = tf.moments(packetDataDer, 0, true)
           let packetStd = tf.sqrt(packetMoments.variance)
@@ -53,6 +53,7 @@ export class MLService {
             })
           })
 
+          //Find shock values
           let isShock = packetDataDer.greater(packetDerStd.mul(tf.scalar(3)))
           tf.whereAsync(isShock).then(data => {
             data.data().then(idxs => {

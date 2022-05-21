@@ -17,10 +17,11 @@ export class BluetoothService {
   timeout = 2000
   pointsPerGraph = 20
 
-  testFailureRate = 0.0
+  testFailureRate = 0.5
   unAckedPackets: Number [] = []
   sentAckedPackets: Number [] = [] 
 
+  //Blue tooth connection strings
   microFlowDevice = null
   BAND_SERVICE = '19B10000-E8F2-537E-4F6C-D104768A1214'.toLowerCase();
   BAND_CHAR= "19B10001-E8F2-537E-4F6C-D104768A1214".toLowerCase();
@@ -47,6 +48,7 @@ export class BluetoothService {
   }
   
   async startListenForPackets(calledBack: Function, that: any){
+    //Starts notificaiton service to read new values from the arduino
     await BleClient.startNotifications(
       this.microFlowDevice.deviceId,
       this.BAND_SERVICE,
@@ -58,28 +60,35 @@ export class BluetoothService {
   }
 
   async stopListenForPackets(){
+    //stop notfications and disconnect microcontrollers
     await BleClient.stopNotifications(this.microFlowDevice.deviceId,this.BAND_SERVICE,this.BAND_CHAR,);
     await BleClient.disconnect(this.microFlowDevice.deviceId);
   }
 
   async connectBLE(){
 
+    //create notification object
     let toast = this.toastCtrl.create({
       message: 'Connected To MicroFlow Device',
       duration: 3000,
       position: 'bottom'
     });
 
+    //initalize native BLE module
     await BleClient.initialize();
     console.log("Bluetoot Initalized")
+
+    //Request device from ble client
     BleClient.requestDevice({
       services: [this.BAND_SERVICE],
     }).then((device) => {
+      //save device and run conneciton routine
       this.microFlowDevice = device
       BleClient.connect(device.deviceId, (deviceId) => this.onDisconnect(deviceId));
       console.log('connected to device', device);
       toast.then((res) => {
         res.present()
+        return
       })
     }).catch(() => {
       console.log("No Device Found")
@@ -87,6 +96,7 @@ export class BluetoothService {
   }
 
   onDisconnect(deviceId: string): void {
+    //Create notification setting on device close
     let toast = this.toastCtrl.create({
       message: 'Disconnected From MicroFlow Device',
       duration: 3000,

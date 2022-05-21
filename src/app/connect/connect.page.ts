@@ -114,7 +114,12 @@ export class ConnectPage implements OnInit {
         var currentTime = new Date()
         var sess_id = Math.floor(Math.random() * 1000000000)
         var NumsamplesTest = Math.floor(Math.random() * 1000)
-        this.sessions.push({uid: this.user.uid, date: currentTime, data: null, sessionID:sess_id, numSamples: NumsamplesTest })
+        if(this.user){
+          this.sessions.push({uid: this.user.uid, date: currentTime, data: null, sessionID:sess_id, numSamples: NumsamplesTest })
+        }
+        else{
+          this.sessions.push({uid: "null", date: currentTime, data: null, sessionID:sess_id, numSamples: NumsamplesTest })
+        }
         Numsamples = Numsamples + NumsamplesTest
       }
       
@@ -308,7 +313,7 @@ export class ConnectPage implements OnInit {
           label: 'Air Flow (m/s)',
           data: sessData,
           fill: false,
-          borderColor: 'rgb(73, 138, 255)',
+          borderColor: 'rgb(97, 18, 36)',
           tension: 0.1
     }]
       
@@ -401,7 +406,7 @@ export class ConnectPage implements OnInit {
           label: 'Air Flow (m/s)',
           data: this.rollingPlotData,
           fill: false,
-          borderColor: 'rgb(73, 138, 255)',
+          borderColor: 'rgb(97, 18, 36)',
           tension: 0.1
         }]}
       }))
@@ -411,17 +416,19 @@ export class ConnectPage implements OnInit {
   }
 
   async pair(){
+    console.log("Begining Pairing")
     this.resetPairing()
 
-    await this.bleService.connectBLE()
-
-    console.log("Begining Pairing")
-    await this.searchForDevice()
-    this.isLoaded = true
-
-    await this.queryDevice()
-    this.isQueried = true
-    console.log("done")
+    this.bleService.connectBLE().then(() =>{
+      this.searchForDevice().then(() => {
+        this.isLoaded = true
+    
+        this.queryDevice().then(() => {
+          this.isQueried = true
+          console.log("done")
+        })
+      })
+    })
   }
 
   resetPairing(){

@@ -88,7 +88,7 @@ export class HomePage {
           label: 'Air Flow (m/s)',
           data: sessData,
           fill: false,
-          borderColor: 'rgb(73, 138, 255)',
+          borderColor: 'rgb(97, 18, 36)',
           tension: 0.1
         }]}
       }))
@@ -217,7 +217,7 @@ export class HomePage {
       label: 'Air Flow (m/s)',
       data: sessData,
       fill: false,
-      borderColor: 'rgb(73, 138, 255)',
+      borderColor: 'rgb(97, 18, 36)',
       tension: 0.1
     }]
 
@@ -239,7 +239,7 @@ export class HomePage {
       label: 'Temperature (C)',
       data: sessData,
       fill: false,
-      borderColor: 'rgb(255, 166, 17)',
+      borderColor: 'rgb(128,128,128)',
       tension: 0.1
     }]
 
@@ -434,7 +434,7 @@ export class HomePage {
             label: 'Air Flow (m/s)',
             data: data,
             fill: false,
-            borderColor: 'rgb(73, 138, 255)',
+            borderColor: 'rgb(97, 18, 36)',
             tension: 0.1
           }]
         }
@@ -443,7 +443,7 @@ export class HomePage {
             label: 'Temperature (C)',
             data: data,
             fill: false,
-            borderColor: 'rgb(255, 166, 17)',
+            borderColor: 'rgb(128,128,128)',
             tension: 0.1
           }]
         }

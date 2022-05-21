@@ -16,10 +16,10 @@
           </ion-card-title>
           <ion-grid class="center_text" id="selector{{i}}">
             <ion-row>
-              <ion-col class="left" [ngStyle]="modeSelected[i] =='airflow'?{'color': '#4989ff'} : {'color': '#8c8c8c'}" (click)="airFlowClick(i)">
+              <ion-col class="left" [ngStyle]="modeSelected[i] =='airflow'?{'color': '#611224'} : {'color': '#8c8c8c'}" (click)="airFlowClick(i)">
                 Air Flow
               </ion-col>
-              <ion-col class="center" [ngStyle]="modeSelected[i] =='temp'?{'color': 'rgb(255, 166, 17)'} : {'color': '#8c8c8c'}" (click)="tempClick(i)">
+              <ion-col class="center" [ngStyle]="modeSelected[i] =='temp'?{'color': 'rgb(128,128,128)'} : {'color': '#8c8c8c'}" (click)="tempClick(i)">
                 Temperature
               </ion-col>
               <ion-col class="right" [ngStyle]="modeSelected[i] =='analysis'?{'color': 'rgb(255, 203, 43)'} : {'color': '#8c8c8c'}" (click)="analysisClick(i)">
